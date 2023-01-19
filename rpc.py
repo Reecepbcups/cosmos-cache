@@ -17,11 +17,12 @@ from flask_socketio import SocketIO, disconnect, emit  # flask_socketio
 
 # Multiple in the future to iterate over?
 BASE = "juno-rpc.reece.sh"
-WEBSOCKET_ADDR = "15.204.143.232:26657"  # ws://15.204.143.232:26657/websocket
 RPC_URL = f"https://{BASE}:443"
 
-# grpcurl -plaintext -d "{\"address\":\"juno10r39fueph9fq7a6lgswu4zdsg8t3gxlq670lt0\"}" 15.204.143.232:9090 cosmos.bank.v1beta1.Query/AllBalances
-# curl -X GET -H "Content-Type: application/json" -H "x-cosmos-block-height: 6619410" http://15.204.143.232:1317/cosmos/bank/v1beta1/balances/juno10r39fueph9fq7a6lgswu4zdsg8t3gxlq670lt0
+WEBSOCKET_ADDR = "15.204.143.232:26657"  # ws://15.204.143.232:26657/websocket
+data_websocket = f"ws://{WEBSOCKET_ADDR}/websocket"
+
+
 RPC_ROOT = requests.get(f"{RPC_URL}/").text.replace(BASE, "localhost:5001")
 
 # GENESIS = requests.get(f"{RPC_URL}/genesis?").json()
@@ -52,15 +53,10 @@ def get_all_endpoints():
 
 
 @app.route("/<path:path>", methods=["GET"])
-@cache.cached(timeout=6, query_string=True)
+@cache.cached(timeout=7, query_string=True)
 def get_endpoint(path):
     url = f"{RPC_URL}/{path}"
     print(url)
-
-    # for i in ["genesis", "genesis?"]:
-    #     if path.endswith(i):
-    #         print("returning directly")
-    #         return jsonify(GENESIS)
 
     try:
         r = requests.get(url)
@@ -69,25 +65,15 @@ def get_endpoint(path):
         return jsonify({"error": str(e)})
 
 
-# socket bridge
-
-
-# import pexpect
-
-# from fastapi import WebSocket
-
-data_websocket = f"ws://{WEBSOCKET_ADDR}/websocket"
+# === socket bridge ===
 
 # return JSONRPC/websockets
 # JSONRPC requests can be also made via websocket. The websocket endpoint is at /websocket, e.g. localhost:26657/websocket. Asynchronous RPC functions like event subscribe and unsubscribe are only available via websockets.
 # https://github.com/hashrocket/ws
-
-# make a bridged JSONRPC request via websocket. From our websocket -> data_websocket
-# make a websocket connection
-
 # grpcurl -plaintext -d "{\"address\":\"juno10r39fueph9fq7a6lgswu4zdsg8t3gxlq670lt0\"}" wss://juno-rpc.reece.sh/websocket cosmos.bank.v1beta1.Query/AllBalances
-
 # flask jsonrpc_websocket /websocket endpoint, connect to data_websocket
+# grpcurl -plaintext -d "{\"address\":\"juno10r39fueph9fq7a6lgswu4zdsg8t3gxlq670lt0\"}" 15.204.143.232:9090 cosmos.bank.v1beta1.Query/AllBalances
+# curl -X GET -H "Content-Type: application/json" -H "x-cosmos-block-height: 6619410" http://15.204.143.232:1317/cosmos/bank/v1beta1/balances/juno10r39fueph9fq7a6lgswu4zdsg8t3gxlq670lt0
 
 import websockets
 
