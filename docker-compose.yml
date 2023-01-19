@@ -8,8 +8,8 @@ services:
       - .env
     ports:
       - '5000:5000'
-  # redis:
-  #   image: redis
-  #   container_name: redis-container
-  #   ports:
-  #     - "6380:6379"
+  redis:
+    image: redis
+    container_name: redis-container
+    ports:
+      - "6379:6379"

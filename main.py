@@ -1,33 +1,33 @@
-# https://levelup.gitconnected.com/implement-api-caching-with-redis-flask-and-docker-step-by-step-9139636cef24
-
+# Reece Williams | https://reece.sh | Jan 2023
+# ----------------------------------------------
+# pip install Flask redis flask_caching requests
+# pip install --upgrade urllib3
+# ----------------------------------------------
 
 from os import getenv
 
-# pip install Flask redis flask_caching requests
-# pip install --upgrade urllib3
 import requests
 from dotenv import load_dotenv
 from flask import Flask, jsonify
 from flask_caching import Cache
 
+# Mulitple in the future to iterate over?
+REST_URL = "https://juno-rest.reece.sh"
+OPEN_API = f"{REST_URL}/static/openapi.yml"
+
 load_dotenv(".env")
 
 app = Flask(__name__)
 
-# juno10r39fueph9fq7a6lgswu4zdsg8t3gxlq670lt0
 
-REST_URL = "https://juno-rest.reece.sh"
-OPEN_API = f"{REST_URL}/static/openapi.yml"
-
-
-def download_open_api_locally():
+def download_openapi_locally():
     r = requests.get(OPEN_API)
     with open("static/openapi.yml", "w") as f:
         f.write(r.text)
 
 
-# run on schedule?
-download_open_api_locally()
+# run on schedule? This only updates per upgrade.
+download_openapi_locally()
 
 cache = Cache(
     app,
@@ -41,9 +41,9 @@ cache = Cache(
     },
 )
 
-# if route is just /, return the openapi.yml
+# if route is just /, return the openapi swagger ui
 @app.route("/", methods=["GET"])
-@cache.cached(timeout=6, query_string=True)
+@cache.cached(timeout=60 * 10, query_string=True)
 def root():
     return requests.get(f"{REST_URL}").text
 
@@ -53,12 +53,11 @@ def root():
 def get_all(path):
     url = f"{REST_URL}/{path}"
 
-    # do the above with a list
-    if any(x in path for x in ["/params", "/proposals"]):
-        cache.cached(timeout=60 * 5, query_string=True)
-
-    r = requests.get(url)
-    return jsonify(r.json())
+    try:
+        r = requests.get(url)
+        return jsonify(r.json())
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 
 if __name__ == "__main__":
