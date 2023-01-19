@@ -16,24 +16,19 @@ from flask_caching import Cache
 from flask_sock import Sock
 from flask_socketio import SocketIO, disconnect, emit  # flask_socketio
 
+load_dotenv(".env")
+
 port = int(getenv("RPC_PORT", 5001))
 
-# Multiple in the future to iterate over?
-BASE_RPC = getenv("BASE_RPC", "juno-rpc.reece.sh")
+RPC_URL = getenv("RPC_URL", "https://juno-rpc.reece.sh:443")
+BASE_RPC = RPC_URL.replace("https://", "").replace(":443", "")
 
-# BASE_RPC = "rpc.juno.strange.love"
-
-# RPC_URL = f"https://{BASE_RPC}:443"
-RPC_URL = getenv("RPC_URL", "https://{BASE}:443").replace("{BASE}", BASE_RPC)
-
-WEBSOCKET_ADDR = getenv("WEBSOCKET_ADDR", "15.204.143.232:26657")
-data_websocket = f"ws://{WEBSOCKET_ADDR}/websocket"
+data_websocket = f'ws://{getenv("WEBSOCKET_ADDR", "15.204.143.232:26657")}/websocket'
 
 RPC_DOMAIN = getenv("RPC_DOMAIN", "localhost:5001")
 
+# replace RPC text to the updated domain
 RPC_ROOT = requests.get(f"{RPC_URL}/").text.replace(BASE_RPC, RPC_DOMAIN)
-
-load_dotenv("../.env")
 
 rpc_app = Flask(__name__)
 sock = Sock(rpc_app)
@@ -57,7 +52,7 @@ cache = Cache(
 
 
 @rpc_app.route("/", methods=["GET"])
-@cache.cached(timeout=60 * 10, query_string=True, key_prefix="rpc_root")
+@cache.cached(timeout=10*6, query_string=True, key_prefix="rpc_root")
 def get_all_rpc():
     return RPC_ROOT
 
@@ -79,9 +74,9 @@ def get_rpc_endpoint(path):
 def post_endpoint():
     try:
         d = json.dumps(request.get_json())
-        print(d)
+        # print(d)
         r = requests.post(f"{RPC_URL}", data=d)
-        print(r.text)
+        # print(r.text)
         return jsonify(r.json())
     except Exception as e:
         return jsonify({"error": str(e)})
@@ -101,22 +96,6 @@ def post_endpoint():
 @sock.route("/websocket")
 def websocket(ws):
     print("websocket connected")
-
-    # connect to data_websocket in a new thread, but does not return when successful.
-    # async def connect():
-    #     async with websockets.connect(data_websocket) as websocket:
-    #         while True:
-    #             # receive data from the websocket
-    #             data = await websocket.recv()
-    #             print(f"< {data}")
-
-    #             if data == "close" or data == None:
-    #                 await websocket.close()
-    #                 break
-
-    #             # return the data back from wss://juno-rpc.reece.sh/websocket, which is a `101 Switching Protocols` status code.
-    #             # This is a JSONRPC subscribe request
-
     async def handle_subscribe():
         async with websockets.connect(data_websocket) as websocket:
             while True:

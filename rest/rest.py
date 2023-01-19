@@ -14,16 +14,15 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify
 from flask_caching import Cache
 
-# Mulitple in the future to iterate over?
+current_dir = os.path.dirname(os.path.realpath(__file__))
+parent_dir = os.path.dirname(current_dir)
+load_dotenv(os.path.join(parent_dir, ".env"))
+
+# Multiple in the future to iterate over?
 # REST_URL = "https://juno-rest.reece.sh"
 REST_URL = getenv("REST_URL", "https://juno-rest.reece.sh")
 OPEN_API = f"{REST_URL}/static/openapi.yml"
 port = int(getenv("REST_PORT", 5000))
-
-current_dir = os.path.dirname(os.path.realpath(__file__))
-parent_dir = os.path.dirname(current_dir)
-
-load_dotenv(os.path.join(parent_dir, ".env"))
 
 app = Flask(__name__)
 
