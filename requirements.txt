@@ -2,3 +2,8 @@ Flask
 redis
 flask_caching
 requests
+python-dotenv
+flask-sock
+Flask-SocketIO
+websockets
+uwsgi

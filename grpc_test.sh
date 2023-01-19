@@ -1,1 +1,0 @@
-grpcurl -plaintext localhost:5001 list
