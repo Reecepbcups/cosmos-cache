@@ -14,7 +14,7 @@
 # sudo systemctl enable juno_rpc.service
 # sudo systemctl status juno_rpc.service
 
-WORKERS=${WORKERS:-12}
+WORKERS=${WORKERS:-20}
 
 cd /root/python-rpc-cache
 gunicorn --workers $WORKERS --bind 0.0.0.0:5001 rpc:rpc_app
