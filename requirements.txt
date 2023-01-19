@@ -7,3 +7,4 @@ flask-sock
 Flask-SocketIO
 websockets
 uwsgi
+gunicorn

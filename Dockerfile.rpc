@@ -1,0 +1,15 @@
+# docker build -f Dockerfile.rpc -t rpc .
+# docker run -d --rm --name juno_rpc --network=host -p 5000:5000 rpc
+FROM python:3.9
+
+WORKDIR /code
+
+COPY ./requirements.txt /code/requirements.txt
+
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+
+COPY . /code
+
+EXPOSE 5000
+
+CMD ["gunicorn", "--conf", "conf.py", "--bind", "0.0.0.0:5000", "rpc:rpc_app"]

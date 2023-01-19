@@ -1,15 +1,23 @@
 version: '3'
 services:
-  api:
-    container_name: flask-container
-    build: .
-    entrypoint: python main.py
-    env_file:
-      - .env
-    ports:
-      - '5000:5000'
+  # rest:
+  #   container_name: juno_rest
+  #   build: .
+  #   entrypoint: python rest.py
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - '5000:5000'
+  # rpc:
+  #   container_name: juno_rpc
+  #   build: .
+  #   entrypoint: python rpc.py
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - '5001:5001'
   redis:
     image: redis
     container_name: redis-container
     ports:
-      - "6379:6379"
+      - "6380:6379"
