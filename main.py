@@ -49,7 +49,7 @@ def root():
 
 
 @app.route("/<path:path>", methods=["GET"])
-@cache.cached(timeout=6, query_string=True)
+@cache.cached(timeout=7, query_string=True)
 def get_all(path):
     url = f"{REST_URL}/{path}"
 
