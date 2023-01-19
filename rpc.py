@@ -10,13 +10,14 @@ from os import getenv
 
 import requests
 from dotenv import load_dotenv
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_caching import Cache
 from flask_sock import Sock
 from flask_socketio import SocketIO, disconnect, emit  # flask_socketio
 
 # Multiple in the future to iterate over?
 BASE = "juno-rpc.reece.sh"
+# BASE = "rpc.juno.strange.love"
 RPC_URL = f"https://{BASE}:443"
 
 WEBSOCKET_ADDR = "15.204.143.232:26657"  # ws://15.204.143.232:26657/websocket
@@ -60,6 +61,22 @@ def get_endpoint(path):
 
     try:
         r = requests.get(url)
+        return jsonify(r.json())
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+
+@app.route("/", methods=["POST"])
+@cache.cached(timeout=7, query_string=True)
+def post_endpoint():
+    url = f"{RPC_URL}"
+    print(url)
+
+    data = json.dumps(request.get_json())
+
+    try:
+        r = requests.post(url, data=data)
+        print(r.text)
         return jsonify(r.json())
     except Exception as e:
         return jsonify({"error": str(e)})
