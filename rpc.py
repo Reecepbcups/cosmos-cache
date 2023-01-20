@@ -6,6 +6,7 @@
 
 import asyncio
 import json
+import os
 from os import getenv
 
 import requests
@@ -16,7 +17,9 @@ from flask_caching import Cache
 from flask_sock import Sock
 from flask_socketio import SocketIO, disconnect, emit  # flask_socketio
 
-load_dotenv(".env")
+current_dir = os.path.dirname(os.path.realpath(__file__))
+
+load_dotenv(os.path.join(current_dir, ".env"))
 
 port = int(getenv("RPC_PORT", 5001))
 
@@ -58,28 +61,23 @@ def get_all_rpc():
 
 
 @rpc_app.route("/<path:path>", methods=["GET"])
-@cache.cached(timeout=7, query_string=True)
+@cache.cached(timeout=10, query_string=True)
 def get_rpc_endpoint(path):
     url = f"{RPC_URL}/{path}"
     # print(url)
-    try:
-        r = requests.get(url)
-        return jsonify(r.json())
-    except Exception as e:
-        return jsonify({"error": str(e)})
+    r = requests.get(url, params=request.args)
+    return jsonify(r.json())
 
 
 @rpc_app.route("/", methods=["POST"])
-@cache.cached(timeout=7, query_string=True)
+@cache.cached(timeout=10, query_string=True)
 def post_endpoint():
-    try:
-        d = json.dumps(request.get_json())
-        # print(d)
-        r = requests.post(f"{RPC_URL}", data=d)
-        # print(r.text)
-        return jsonify(r.json())
-    except Exception as e:
-        return jsonify({"error": str(e)})
+    d = json.dumps(request.get_json())
+    # print(d)
+    r = requests.post(f"{RPC_URL}", data=d)
+
+    # print(r.text)
+    return jsonify(r.json())
 
 
 # === socket bridge ===
