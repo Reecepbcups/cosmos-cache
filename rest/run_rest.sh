@@ -26,8 +26,8 @@
 # sudo systemctl enable juno_rest.service
 # sudo systemctl status juno_rest.service
 
-WORKERS=${WORKERS:-4}
-THREADS=${THREADS:-2}
+WORKERS=${WORKERS:-8}
+THREADS=${THREADS:-4}
 
 cd /root/python-rpc-cache/rest
 gunicorn --workers $WORKERS --threads $THREADS --preload --bind 0.0.0.0:5000 rest:app

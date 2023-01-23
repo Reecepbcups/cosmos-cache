@@ -1,0 +1,10 @@
+1) variable length rest endpoint (regex match) and RPC method time cache.
+ex: if url ".*/params", cache for 30 seconds instead of 6 seconds
+
+2) Round Robin multiple endpoints
+List of endpoints in the .env file. Change to a JSON?
+.gitignore env / json file. Require the cp thing + documents
+
+3) Add docker / Akash support + instructions
+
+4) Example nginx config
