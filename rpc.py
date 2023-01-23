@@ -30,6 +30,7 @@ RPC_URL = getenv("RPC_URL", "https://juno-rpc.reece.sh:443")
 # BASE_RPC = RPC_URL.replace("https://", "").replace("http://", "").replace(":443", "")
 BASE_RPC = getenv("BASE_RPC", "15.204.143.232:26657")
 
+
 BACKUP_RPC_URL = getenv("BACKUP_RPC_URL", "https://rpc.juno.strange.love:443")
 BACKUP_BASE_RPC = getenv("BACKUP_BASE_RPC", "rpc.juno.strange.love")
 
@@ -48,11 +49,21 @@ except:
         BACKUP_BASE_RPC, RPC_DOMAIN
     )
 
+RPC_TITLE = getenv("RPC_TITLE", "")
+if len(RPC_TITLE) > 0:
+    RPC_ROOT_HTML = RPC_ROOT_HTML.replace(
+        "<html><body>",
+        f"<html><head><title>{RPC_TITLE}</title></head><body>",
+    )
+
 # Puts text at the bottom, maybe put at the top in the future?
-RPC_ROOT_HTML = RPC_ROOT_HTML.replace(
-    "Available endpoints:<br><br>",
-    f'<a href="https://twitter.com/Reecepbcups_/status/1617396571188133888?s=20&t=OKi00IkStINFqYVweZXlaw">Custom caching solution active for {RPC_DOMAIN}</a><br><br>Available endpoints:<br><br>',
-)
+RPC_CUSTOM_TEXT = getenv("RPC_CUSTOM_TEXT", "").replace("{RPC_DOMAIN}", f"{RPC_DOMAIN}")
+if len(RPC_CUSTOM_TEXT) > 0:
+    RPC_ROOT_HTML = RPC_ROOT_HTML.replace(
+        "Available endpoints:<br><br>",
+        f"{RPC_CUSTOM_TEXT}<br>Available endpoints:<br><br>",
+    )
+
 
 rpc_app = Flask(__name__)
 sock = Sock(rpc_app)

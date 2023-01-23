@@ -8,6 +8,7 @@
 
 import json
 import os
+import re
 from os import getenv
 
 import redis
@@ -22,8 +23,9 @@ parent_dir = os.path.dirname(current_dir)
 
 load_dotenv(os.path.join(parent_dir, ".env"))
 
-port = int(getenv("REST_PORT", 5000))
+API_TITLE = getenv("API_TITLE", "Swagger API")
 
+port = int(getenv("REST_PORT", 5000))
 
 # Multiple in the future to iterate over?
 # REST_URL = "https://juno-rest.reece.sh"
@@ -51,12 +53,11 @@ rDB = redis.Redis.from_url(redis_url)
 
 
 total_calls = {
-    "total_cache;swagger_html": 0,
     "total_cache;get_all_rest": 0,
     "total_outbound;get_all_rest": 0,
 }
 
-INC_EVERY = 25
+INC_EVERY = 1
 
 
 def inc_value(key):
@@ -75,22 +76,26 @@ def inc_value(key):
         total_calls[key] += 1
 
 
+HTML = ""
+
 # if route is just /, return the openapi swagger ui
 @app.route("/", methods=["GET"])
 @cross_origin()
 def root():
-    key = f"{PREFIX};swagger_html"
-    v = rDB.get(key)
-    if v:
-        inc_value("total_cache;swagger_html")
-        return v.decode("utf-8")
+    global HTML
 
+    if len(HTML) > 0:
+        return HTML
+
+    # sets HTML if not set
     req = requests.get(f"{REST_URL}")
-    html = req.text
 
-    rDB.setex(key, ONE_HOUR, html)
+    HTML = req.text.replace(
+        "//unpkg.com/swagger-ui-dist@3.40.0/favicon-16x16.png", "/static/favicon.png"
+    )
+    HTML = re.sub(r"<title>.*</title>", f"<title>{API_TITLE}</title>", HTML)
 
-    return html
+    return HTML
 
 
 # return any RPC queries
