@@ -9,13 +9,15 @@ import json
 import os
 from os import getenv
 
+import redis
 import requests
 import websockets
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_caching import Cache
+from flask_cors import CORS, cross_origin
 from flask_sock import Sock
-from flask_socketio import SocketIO, disconnect, emit  # flask_socketio
+from flask_socketio import SocketIO, emit  # flask_socketio
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -24,60 +26,67 @@ load_dotenv(os.path.join(current_dir, ".env"))
 port = int(getenv("RPC_PORT", 5001))
 
 RPC_URL = getenv("RPC_URL", "https://juno-rpc.reece.sh:443")
-BASE_RPC = RPC_URL.replace("https://", "").replace(":443", "")
+BASE_RPC = RPC_URL.replace("https://", "").replace("http://", "").replace(":443", "")
+
+CACHE_SECONDS = int(getenv("CACHE_SECONDS", 7))
 
 data_websocket = f'ws://{getenv("WEBSOCKET_ADDR", "15.204.143.232:26657")}/websocket'
 
 RPC_DOMAIN = getenv("RPC_DOMAIN", "localhost:5001")
 
 # replace RPC text to the updated domain
-RPC_ROOT = requests.get(f"{RPC_URL}/").text.replace(BASE_RPC, RPC_DOMAIN)
+RPC_ROOT_HTML = requests.get(f"{RPC_URL}/").text.replace(BASE_RPC, RPC_DOMAIN)
 
 rpc_app = Flask(__name__)
 sock = Sock(rpc_app)
 socketio = SocketIO(rpc_app)
+cors = CORS(rpc_app, resources={r"/*": {"origins": "*"}})
 
-redis_host = getenv("CACHE_REDIS_HOST", "127.0.0.1")
-redis_port = int(getenv("CACHE_REDIS_PORT", "6379"))
-cache = Cache(
-    rpc_app,
-    config={
-        "CACHE_TYPE": getenv("CACHE_TYPE", "redis"),
-        "CACHE_REDIS_HOST": redis_host,
-        "CACHE_REDIS_PORT": redis_port,
-        "CACHE_REDIS_DB": getenv("CACHE_REDIS_DB", ""),
-        "CACHE_REDIS_URL": getenv(
-            "CACHE_REDIS_URL", f"redis://{redis_host}:{redis_port}/0"
-        ),
-        "CACHE_DEFAULT_TIMEOUT": int(getenv("CACHE_DEFAULT_TIMEOUT", "6")),
-    },
-)
-
+redis_url = getenv("CACHE_REDIS_URL", "redis://127.0.0.1:6379/0")
+rDB = redis.Redis.from_url(redis_url)
 
 @rpc_app.route("/", methods=["GET"])
-@cache.cached(timeout=10*6, query_string=True, key_prefix="rpc_root")
+@cross_origin()
 def get_all_rpc():
-    return RPC_ROOT
+    return RPC_ROOT_HTML
 
 
 @rpc_app.route("/<path:path>", methods=["GET"])
-@cache.cached(timeout=10, query_string=True)
+@cross_origin()
 def get_rpc_endpoint(path):
     url = f"{RPC_URL}/{path}"
-    # print(url)
-    r = requests.get(url, params=request.args)
-    return jsonify(r.json())
 
+    v = rDB.get(url)    
+    if v:        
+        # return v.decode("utf-8")
+        return jsonify(json.loads(v.decode("utf-8")))
+
+    req = requests.get(url, params=request.args)
+
+    rDB.setex(url, CACHE_SECONDS, json.dumps(req.json()))
+
+    return req.json()
 
 @rpc_app.route("/", methods=["POST"])
-@cache.cached(timeout=10, query_string=True)
-def post_endpoint():
-    d = json.dumps(request.get_json())
-    # print(d)
-    r = requests.post(f"{RPC_URL}", data=d)
+@cross_origin()
+def post_endpoint():    
+    REQ_DATA: dict = request.get_json()
 
-    # print(r.text)
-    return jsonify(r.json())
+    method, params = REQ_DATA.get("method", None), REQ_DATA.get("params", None)
+    key = f"{method}{params}"    
+    
+    v = rDB.get(key)    
+    if v:
+        # print("cache hit")
+        # return v.decode("utf-8")
+        return jsonify(json.loads(v.decode("utf-8")))
+
+    # make req
+    req = requests.post(f"{RPC_URL}", data=json.dumps(REQ_DATA))    
+  
+    rDB.setex(key, CACHE_SECONDS, json.dumps(req.json()))
+
+    return req.json()
 
 
 # === socket bridge ===
@@ -108,6 +117,5 @@ def websocket(ws):
     asyncio.run(handle_subscribe())
 
 
-# run
 if __name__ == "__main__":
     rpc_app.run(debug=True, host="0.0.0.0", port=port)

@@ -13,6 +13,7 @@ import requests
 from dotenv import load_dotenv
 from flask import Flask, jsonify
 from flask_caching import Cache
+from flask_cors import CORS, cross_origin
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.dirname(current_dir)
@@ -25,7 +26,7 @@ OPEN_API = f"{REST_URL}/static/openapi.yml"
 port = int(getenv("REST_PORT", 5000))
 
 app = Flask(__name__)
-
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 def download_openapi_locally():
     r = requests.get(OPEN_API)
@@ -50,6 +51,7 @@ cache = Cache(
 
 # if route is just /, return the openapi swagger ui
 @app.route("/", methods=["GET"])
+@cross_origin()
 @cache.cached(timeout=60 * 10, query_string=True)
 def root():
     return requests.get(f"{REST_URL}").text
@@ -58,6 +60,7 @@ def root():
 # return any RPC queries
 @app.route("/<path:path>", methods=["GET"])
 @cache.cached(timeout=7, query_string=True)
+@cross_origin()
 def get_all_rest(path):
     url = f"{REST_URL}/{path}"
 

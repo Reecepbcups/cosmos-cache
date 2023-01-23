@@ -8,3 +8,4 @@ Flask-SocketIO
 websockets
 uwsgi
 gunicorn
+flask-cors
