@@ -1,8 +1,11 @@
-# python-rpc-cache
+# cosmos-rpc-cache
 
-## request -> nginx -> RPC_CACHE -> Juno Node.
+Optimize Cosmos RPC calls by caching responses with Redis.
+Both GET and POST
 
-## websocket -> nginx -> RPC_CACHE -> Juno Node. as well via bridge passth
+RPC only currently, REST in the future (Can't currently run both on the same machine. But will drastically speed up Swagger)
+
+---
 
 Install:
 
