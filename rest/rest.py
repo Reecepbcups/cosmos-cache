@@ -6,27 +6,38 @@
 
 # https://flask.palletsprojects.com/en/2.0.x/deploying/wsgi-standalone/#proxy-setups
 
+import json
 import os
 from os import getenv
 
+import redis
 import requests
 from dotenv import load_dotenv
-from flask import Flask, jsonify
-from flask_caching import Cache
+from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
 
+ONE_HOUR = 60 * 60
 current_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.dirname(current_dir)
+
 load_dotenv(os.path.join(parent_dir, ".env"))
+
+port = int(getenv("REST_PORT", 5000))
+
 
 # Multiple in the future to iterate over?
 # REST_URL = "https://juno-rest.reece.sh"
 REST_URL = getenv("REST_URL", "https://juno-rest.reece.sh")
 OPEN_API = f"{REST_URL}/static/openapi.yml"
-port = int(getenv("REST_PORT", 5000))
+
+CACHE_SECONDS = int(getenv("CACHE_SECONDS", 7))
+ENABLE_COUNTER = getenv("ENABLE_COUNTER", "true").lower().startswith("t")
+
+PREFIX = "junorest"
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
+
 
 def download_openapi_locally():
     r = requests.get(OPEN_API)
@@ -35,41 +46,77 @@ def download_openapi_locally():
         f.write(r.text)
 
 
-download_openapi_locally()
+redis_url = getenv("CACHE_REDIS_URL", "redis://127.0.0.1:6379/0")
+rDB = redis.Redis.from_url(redis_url)
 
-cache = Cache(
-    app,
-    config={
-        "CACHE_TYPE": getenv("CACHE_TYPE", "redis"),
-        "CACHE_REDIS_HOST": getenv("CACHE_REDIS_HOST", "redis"),
-        "CACHE_REDIS_PORT": int(getenv("CACHE_REDIS_PORT", "6379")),
-        "CACHE_REDIS_DB": getenv("CACHE_REDIS_DB", ""),
-        "CACHE_REDIS_URL": getenv("CACHE_REDIS_URL", "redis://redis:6379/0"),
-        "CACHE_DEFAULT_TIMEOUT": int(getenv("CACHE_DEFAULT_TIMEOUT", "6")),
-    },
-)
+
+total_calls = {
+    "total_cache;swagger_html": 0,
+    "total_cache;get_all_rest": 0,
+    "total_outbound;get_all_rest": 0,
+}
+
+INC_EVERY = 25
+
+
+def inc_value(key):
+    global total_calls
+
+    if ENABLE_COUNTER == False:
+        return
+
+    if key not in total_calls:
+        total_calls[key] = 0
+
+    if total_calls[key] >= INC_EVERY:
+        rDB.incr(f"{PREFIX};{key}", amount=total_calls[key])
+        total_calls[key] = 0
+    else:
+        total_calls[key] += 1
+
 
 # if route is just /, return the openapi swagger ui
 @app.route("/", methods=["GET"])
 @cross_origin()
-@cache.cached(timeout=60 * 10, query_string=True)
 def root():
-    return requests.get(f"{REST_URL}").text
+    key = f"{PREFIX};swagger_html"
+    v = rDB.get(key)
+    if v:
+        inc_value("total_cache;swagger_html")
+        return v.decode("utf-8")
+
+    req = requests.get(f"{REST_URL}")
+    html = req.text
+
+    rDB.setex(key, ONE_HOUR, html)
+
+    return html
 
 
 # return any RPC queries
 @app.route("/<path:path>", methods=["GET"])
-@cache.cached(timeout=7, query_string=True)
 @cross_origin()
 def get_all_rest(path):
     url = f"{REST_URL}/{path}"
+    args = request.args
+
+    key = f"{PREFIX};{url};{args}"
+    v = rDB.get(key)
+    if v:
+        inc_value("total_cache;get_all_rest")
+        return jsonify(json.loads(v.decode("utf-8")))
 
     try:
-        r = requests.get(url)
-        return jsonify(r.json())
-    except Exception as e:
-        return jsonify({"error": str(e)})
+        req = requests.get(url, params=args)
+    except:
+        return {"error": "error"}
+
+    rDB.setex(key, CACHE_SECONDS, json.dumps(req.json()))
+    inc_value("total_outbound;get_all_rest")
+
+    return req.json()
 
 
 if __name__ == "__main__":
+    download_openapi_locally()
     app.run(debug=True, host="0.0.0.0", port=port)
