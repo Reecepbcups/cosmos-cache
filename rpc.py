@@ -34,6 +34,7 @@ BACKUP_RPC_URL = getenv("BACKUP_RPC_URL", "https://rpc.juno.strange.love:443")
 BACKUP_BASE_RPC = getenv("BACKUP_BASE_RPC", "rpc.juno.strange.love")
 
 CACHE_SECONDS = int(getenv("CACHE_SECONDS", 7))
+ENABLE_COUNTER = getenv("ENABLE_COUNTER", "true").lower().startswith("t")
 
 data_websocket = f'ws://{getenv("WEBSOCKET_ADDR", "15.204.143.232:26657")}/websocket'
 
@@ -81,10 +82,13 @@ INC_EVERY = 25
 def inc_value(key):
     global total_calls
 
+    if ENABLE_COUNTER == False:
+        return
+
     if key not in total_calls:
         total_calls[key] = 0
 
-    if total_calls[key] > INC_EVERY:
+    if total_calls[key] >= INC_EVERY:
         rDB.incr(f"{PREFIX};{key}", amount=total_calls[key])
         total_calls[key] = 0
     else:
