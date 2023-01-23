@@ -55,15 +55,18 @@ def get_all_rpc():
 @cross_origin()
 def get_rpc_endpoint(path):
     url = f"{RPC_URL}/{path}"
+    args = request.args    
 
-    v = rDB.get(url)    
+    key = f"{url};{args}"
+
+    v = rDB.get(key)    
     if v:        
         # return v.decode("utf-8")
         return jsonify(json.loads(v.decode("utf-8")))
 
-    req = requests.get(url, params=request.args)
+    req = requests.get(url, params=args)
 
-    rDB.setex(url, CACHE_SECONDS, json.dumps(req.json()))
+    rDB.setex(key, CACHE_SECONDS, json.dumps(req.json()))
 
     return req.json()
 
