@@ -11,11 +11,12 @@
 # sudo systemctl daemon-reload 
 # sudo systemctl restart juno_rpc.service
 # sudo systemctl start juno_rpc.service
+# sudo systemctl stop juno_rpc.service
 # sudo systemctl enable juno_rpc.service
 # sudo systemctl status juno_rpc.service
 
-WORKERS=${WORKERS:-22}
-THREADS=${THREADS:-4}
+WORKERS=${WORKERS:-20}
+THREADS=${THREADS:-2}
 
 cd /root/python-rpc-cache
 gunicorn --workers $WORKERS --threads $THREADS --backlog 80000 --preload --worker-connections 80000 --bind 0.0.0.0:5001 rpc:rpc_app
