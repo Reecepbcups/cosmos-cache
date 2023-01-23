@@ -13,11 +13,10 @@ import redis
 import requests
 import websockets
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request, send_from_directory
-from flask_caching import Cache
+from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
 from flask_sock import Sock
-from flask_socketio import SocketIO, emit  # flask_socketio
+from flask_socketio import emit  # flask_socketio
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -26,7 +25,12 @@ load_dotenv(os.path.join(current_dir, ".env"))
 port = int(getenv("RPC_PORT", 5001))
 
 RPC_URL = getenv("RPC_URL", "https://juno-rpc.reece.sh:443")
-BASE_RPC = RPC_URL.replace("https://", "").replace("http://", "").replace(":443", "")
+# BASE_RPC = RPC_URL.replace("https://", "").replace("http://", "").replace(":443", "")
+BASE_RPC = getenv("BASE_RPC", "15.204.143.232:26657")
+
+BACKUP_RPC_URL = getenv("BACKUP_RPC_URL", "https://rpc.juno.strange.love:443")
+BACKUP_BASE_RPC = getenv("BACKUP_BASE_RPC", "rpc.juno.strange.love")
+
 
 CACHE_SECONDS = int(getenv("CACHE_SECONDS", 7))
 
@@ -35,11 +39,19 @@ data_websocket = f'ws://{getenv("WEBSOCKET_ADDR", "15.204.143.232:26657")}/webso
 RPC_DOMAIN = getenv("RPC_DOMAIN", "localhost:5001")
 
 # replace RPC text to the updated domain
-RPC_ROOT_HTML = requests.get(f"{RPC_URL}/").text.replace(BASE_RPC, RPC_DOMAIN)
+try:
+    RPC_ROOT_HTML = requests.get(f"{RPC_URL}/").text.replace(BASE_RPC, RPC_DOMAIN)
+except:
+    RPC_ROOT_HTML = requests.get(f"{BACKUP_RPC_URL}/").text.replace(BACKUP_BASE_RPC, RPC_DOMAIN)
+
+# Puts text at the bottom, maybe put at the top in the future?
+# not tested if this breaks RPC queries or anything
+# RPC_ROOT_HTML = RPC_ROOT_HTML.replace(
+#     "</a></br></body></html>", 
+#     '</a></br></br></br><a href="https://twitter.com/Reecepbcups_/status/1617396571188133888?s=20&t=OKi00IkStINFqYVweZXlaw">Custom caching solution in use :) open source soon</a></br></body></html>')
 
 rpc_app = Flask(__name__)
 sock = Sock(rpc_app)
-socketio = SocketIO(rpc_app)
 cors = CORS(rpc_app, resources={r"/*": {"origins": "*"}})
 
 redis_url = getenv("CACHE_REDIS_URL", "redis://127.0.0.1:6379/0")
@@ -64,7 +76,11 @@ def get_rpc_endpoint(path):
         # return v.decode("utf-8")
         return jsonify(json.loads(v.decode("utf-8")))
 
-    req = requests.get(url, params=args)
+    try:
+        req = requests.get(url, params=args)
+    except Exception as e:
+        print(e)
+        req = requests.get(f"{BACKUP_RPC_URL}/{path}", params=args)    
 
     rDB.setex(key, CACHE_SECONDS, json.dumps(req.json()))
 
@@ -79,13 +95,15 @@ def post_endpoint():
     key = f"{method}{params}"    
     
     v = rDB.get(key)    
-    if v:
-        # print("cache hit")
+    if v:        
         # return v.decode("utf-8")
         return jsonify(json.loads(v.decode("utf-8")))
 
     # make req
-    req = requests.post(f"{RPC_URL}", data=json.dumps(REQ_DATA))    
+    try:
+        req = requests.post(f"{RPC_URL}", data=json.dumps(REQ_DATA))    
+    except:
+        req = requests.post(f"{BACKUP_RPC_URL}", data=json.dumps(REQ_DATA))
   
     rDB.setex(key, CACHE_SECONDS, json.dumps(req.json()))
 
