@@ -1,11 +1,14 @@
 {
     "DEFAULT": 6,
     "rpc": {        
-        "genesis": 3600,        
-        "block?height=": 3600,
-        "block_results?height=": 3600        
+        ".*genesis": 3600,        
+        ".*genesis?": 3600,        
+        ".*block?height=": 3600,
+        ".*block_results?height=": 3600
     },
     "rest": {        
+        ".*/delegations": 300,
+        ".*bank/v1beta1/supply.*": 300,
         ".*/params": 300,
         ".*/slashes": 30,
         ".*/commission": 30,
