@@ -17,9 +17,15 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
 
-ONE_HOUR = 60 * 60
 current_dir = os.path.dirname(os.path.realpath(__file__))
 parent_dir = os.path.dirname(current_dir)
+
+# Load specific cache times (regex supported)
+with open(f"{parent_dir}/cache_times.json", "r") as f:
+    cache_times: dict = json.loads(f.read())
+
+DEFAULT_CACHE_SECONDS = cache_times.get("DEFAULT", 6)
+ENDPOINTS = cache_times.get("rest", {})
 
 load_dotenv(os.path.join(parent_dir, ".env"))
 
@@ -32,10 +38,10 @@ port = int(getenv("REST_PORT", 5000))
 REST_URL = getenv("REST_URL", "https://juno-rest.reece.sh")
 OPEN_API = f"{REST_URL}/static/openapi.yml"
 
-CACHE_SECONDS = int(getenv("CACHE_SECONDS", 7))
+
 ENABLE_COUNTER = getenv("ENABLE_COUNTER", "true").lower().startswith("t")
 
-PREFIX = "junorest"
+PREFIX = getenv("REDIS_REST_PREFIX", "junorest")
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
@@ -48,8 +54,8 @@ def download_openapi_locally():
         f.write(r.text)
 
 
-redis_url = getenv("CACHE_REDIS_URL", "redis://127.0.0.1:6379/0")
-rDB = redis.Redis.from_url(redis_url)
+REDIS_URL = getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
+rDB = redis.Redis.from_url(REDIS_URL)
 
 
 total_calls = {
@@ -57,7 +63,7 @@ total_calls = {
     "total_outbound;get_all_rest": 0,
 }
 
-INC_EVERY = 1
+INC_EVERY = int(getenv("INCREASE_COUNTER_EVERY", 10))
 
 
 def inc_value(key):
@@ -116,7 +122,12 @@ def get_all_rest(path):
     except:
         return {"error": "error"}
 
-    rDB.setex(key, CACHE_SECONDS, json.dumps(req.json()))
+    # Sets special endpoints to cache for longer/ shorter as needed
+    cache_seconds = next(
+        (v for k, v in ENDPOINTS.items() if re.match(k, path)), DEFAULT_CACHE_SECONDS
+    )
+
+    rDB.setex(key, cache_seconds, json.dumps(req.json()))
     inc_value("total_outbound;get_all_rest")
 
     return req.json()
