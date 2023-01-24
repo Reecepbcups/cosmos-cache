@@ -14,6 +14,12 @@ This program sits on top of another server and acts as a middleware proxy betwee
 
 ## Setup
 
+```bash
+python -m pip install -r requirements.txt --upgrade
+```
+
+### Redis
+
 ```sh
 sudo apt install redis-server
 
@@ -26,7 +32,6 @@ systemctl enable redis
 ### or docker
 
 ```sh
-# start redis server
 docker run -d --name redis -p 6379:6379 redis
 ```
 
