@@ -7,6 +7,7 @@
 import asyncio
 import json
 import os
+import re
 from os import getenv
 
 import redis
@@ -16,7 +17,7 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
 from flask_sock import Sock
-from flask_socketio import emit  # flask_socketio
+from flask_socketio import emit
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -24,22 +25,26 @@ load_dotenv(os.path.join(current_dir, ".env"))
 
 port = int(getenv("RPC_PORT", 5001))
 
-PREFIX = "junorpc"
+PREFIX = getenv("REDIS_RPC_PREFIX", "junorpc")
 
 RPC_URL = getenv("RPC_URL", "https://juno-rpc.reece.sh:443")
-# BASE_RPC = RPC_URL.replace("https://", "").replace("http://", "").replace(":443", "")
 BASE_RPC = getenv("BASE_RPC", "15.204.143.232:26657")
-
 
 BACKUP_RPC_URL = getenv("BACKUP_RPC_URL", "https://rpc.juno.strange.love:443")
 BACKUP_BASE_RPC = getenv("BACKUP_BASE_RPC", "rpc.juno.strange.love")
 
-CACHE_SECONDS = int(getenv("CACHE_SECONDS", 7))
 ENABLE_COUNTER = getenv("ENABLE_COUNTER", "true").lower().startswith("t")
 
 data_websocket = f'ws://{getenv("WEBSOCKET_ADDR", "15.204.143.232:26657")}/websocket'
 
 RPC_DOMAIN = getenv("RPC_DOMAIN", "localhost:5001")
+
+# Load specific cache times (regex supported)
+with open(f"{current_dir}/cache_times.json", "r") as f:
+    cache_times: dict = json.loads(f.read())
+
+DEFAULT_CACHE_SECONDS = cache_times.get("DEFAULT", 6)
+ENDPOINTS = cache_times.get("rest", {})
 
 # replace RPC text to the updated domain
 try:
@@ -69,8 +74,8 @@ rpc_app = Flask(__name__)
 sock = Sock(rpc_app)
 cors = CORS(rpc_app, resources={r"/*": {"origins": "*"}})
 
-redis_url = getenv("CACHE_REDIS_URL", "redis://127.0.0.1:6379/0")
-rDB = redis.Redis.from_url(redis_url)
+REDIS_URL = getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
+rDB = redis.Redis.from_url(REDIS_URL)
 
 
 @rpc_app.route("/", methods=["GET"])
@@ -87,7 +92,7 @@ total_calls = {
     "total_outbound;post_endpoint": 0,
 }
 
-INC_EVERY = 25
+INC_EVERY = int(getenv("INCREASE_COUNTER_EVERY", 10))
 
 
 def inc_value(key):
@@ -104,6 +109,13 @@ def inc_value(key):
         total_calls[key] = 0
     else:
         total_calls[key] += 1
+
+
+def get_cache_time_seconds(path: str) -> int:
+    cache_seconds = next(
+        (v for k, v in ENDPOINTS.items() if re.match(k, path)), DEFAULT_CACHE_SECONDS
+    )
+    return cache_seconds
 
 
 @rpc_app.route("/<path:path>", methods=["GET"])
@@ -127,7 +139,9 @@ def get_rpc_endpoint(path):
         print(e)
         req = requests.get(f"{BACKUP_RPC_URL}/{path}", params=args)
 
-    rDB.setex(key, CACHE_SECONDS, json.dumps(req.json()))
+    cache_seconds = get_cache_time_seconds(path)
+
+    rDB.setex(key, cache_seconds, json.dumps(req.json()))
     inc_value("total_outbound;get_rpc_endpoint")
 
     return req.json()
@@ -139,7 +153,7 @@ def post_endpoint():
     REQ_DATA: dict = request.get_json()
 
     method, params = REQ_DATA.get("method", None), REQ_DATA.get("params", None)
-    key = f"{PREFIX};{method}{params}"
+    key = f"{PREFIX};{method};{params}"
 
     v = rDB.get(key)
     if v:
@@ -152,7 +166,9 @@ def post_endpoint():
     except:
         req = requests.post(f"{BACKUP_RPC_URL}", data=json.dumps(REQ_DATA))
 
-    rDB.setex(key, CACHE_SECONDS, json.dumps(req.json()))
+    cache_seconds = get_cache_time_seconds(method)
+
+    rDB.setex(key, cache_seconds, json.dumps(req.json()))
     inc_value("total_outbound;post_endpoint")
 
     return req.json()

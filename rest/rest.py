@@ -38,7 +38,6 @@ port = int(getenv("REST_PORT", 5000))
 REST_URL = getenv("REST_URL", "https://juno-rest.reece.sh")
 OPEN_API = f"{REST_URL}/static/openapi.yml"
 
-
 ENABLE_COUNTER = getenv("ENABLE_COUNTER", "true").lower().startswith("t")
 
 PREFIX = getenv("REDIS_REST_PREFIX", "junorest")
@@ -122,7 +121,6 @@ def get_all_rest(path):
     except:
         return {"error": "error"}
 
-    # Sets special endpoints to cache for longer/ shorter as needed
     cache_seconds = next(
         (v for k, v in ENDPOINTS.items() if re.match(k, path)), DEFAULT_CACHE_SECONDS
     )
