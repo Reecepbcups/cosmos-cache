@@ -17,7 +17,7 @@ total_calls = {
 }
 
 
-def inc_value(key):
+def increment_call_value(key):
     global total_calls
 
     if CONFIG.ENABLE_COUNTER == False:

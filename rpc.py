@@ -15,8 +15,8 @@ from flask_sock import Sock
 from flask_socketio import emit
 
 import CONFIG
-from CONFIG import REDIS_DB, inc_value
-from HELPERS import replace_rpc_text
+from CONFIG import REDIS_DB
+from HELPERS import increment_call_value, replace_rpc_text
 
 # === APP ===
 CONFIG.update_cache_times()
@@ -40,7 +40,7 @@ def get_all_rpc():
 def get_cache_setings():
     """
     Updates viewable cache times (seconds) at DOMAIN/cache_info.
-    Auto updates every 15 minutes for this program on update/change automatically without restart.
+    Auto updates for this program on update/change automatically without restart.
     """
     key = f"{CONFIG.RPC_PREFIX};cache_times"
     v = REDIS_DB.get(key)
@@ -49,7 +49,7 @@ def get_cache_setings():
 
     CONFIG.update_cache_times()
 
-    REDIS_DB.setex(key, 15 * 30, json.dumps(CONFIG.cache_times))
+    REDIS_DB.setex(key, 15 * 60, json.dumps(CONFIG.cache_times))
     return jsonify(CONFIG.cache_times)
 
 
@@ -65,7 +65,7 @@ def get_rpc_endpoint(path):
 
     v = REDIS_DB.get(key)
     if v:
-        inc_value("total_cache;get_rpc_endpoint")
+        increment_call_value("total_cache;get_rpc_endpoint")
         return jsonify(json.loads(v.decode("utf-8")))
 
     try:
@@ -77,7 +77,7 @@ def get_rpc_endpoint(path):
     cache_seconds = CONFIG.get_cache_time_seconds(path)
 
     REDIS_DB.setex(key, cache_seconds, json.dumps(req.json()))
-    inc_value("total_outbound;get_rpc_endpoint")
+    increment_call_value("total_outbound;get_rpc_endpoint")
 
     return req.json()
 
@@ -92,7 +92,7 @@ def post_endpoint():
 
     v = REDIS_DB.get(key)
     if v:
-        inc_value("total_cache;post_endpoint")
+        increment_call_value("total_cache;post_endpoint")
         return jsonify(json.loads(v.decode("utf-8")))
 
     # make req
@@ -104,7 +104,7 @@ def post_endpoint():
     cache_seconds = CONFIG.get_cache_time_seconds(method)
 
     REDIS_DB.setex(key, cache_seconds, json.dumps(req.json()))
-    inc_value("total_outbound;post_endpoint")
+    increment_call_value("total_outbound;post_endpoint")
 
     return req.json()
 
