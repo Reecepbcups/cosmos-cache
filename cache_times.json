@@ -1,25 +1,26 @@
 {
     "DEFAULT": 6,
     "rpc": {        
-        "genesis": 3600,
-        "genesis.*": 3600,
+        "genesis": 86400,
+        "genesis.*": 86400,
         "block?height=.*": 21600,
         "block_results?height=.*": 21600,
         "unconfirmed_txs": 1
     },
     "rest": {        
+        "cosmos\/auth\/v1beta1\/accounts": -1,
+
         ".*\/params": 300,
-        ".*historical_info.*": 3600,
         ".*delegations": 300,
         ".*slashes": 30,
         ".*commission": 30,
         ".*outstanding_rewards": 30,
-        ".*proposals": 60,
+        "cosmos\/gov\/v1beta1\/proposals.*": 60,
+        "cosmos\/staking\/v1beta1\/historical_info.*": 3600,
         "cosmos\/bank\/v1beta1\/supply": 60,
         "cosmos\/staking\/v1beta1\/pool": 30,
         "cosmos\/staking\/v1beta1\/validators": 120,
         "ibc\/apps\/transfer\/v1\/denom_traces": 30,
-        "tendermint\/v1beta1\/node_info": 60,
-        "cosmos\/auth\/v1beta1\/accounts": -1
+        "tendermint\/v1beta1\/node_info": 60
     }
 }
