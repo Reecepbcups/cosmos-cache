@@ -15,7 +15,7 @@
 # [Service]
 # User=root
 # Group=root
-# WorkingDirectory=/root/cosmos-endpoint-cache/%i
+# WorkingDirectory=/root/cosmos-endpoint-cache/
 # ExecStart=/root/cosmos-endpoint-cache/run_rpc.sh
 # [Install]
 # WantedBy=gunicorn.target
@@ -29,9 +29,9 @@
 
 PORT=${PORT:-5001}
 
-WORKERS=${WORKERS:-20}
+WORKERS=${WORKERS:-24}
 THREADS=${THREADS:-2}
-W_CONN=${W_CONN:-2}
+W_CONN=${W_CONN:-1000}
 BACKLOG=${BACKLOG:-2048}
 
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
