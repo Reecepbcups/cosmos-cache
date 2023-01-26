@@ -26,6 +26,12 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 REST_SWAGGER_HTML = ""
 
 
+@app.before_first_request
+def before_first_request():
+    CONFIG.update_cache_times()
+    download_openapi_locally()
+
+
 # if route is just /, return the openapi swagger ui
 @app.route("/", methods=["GET"])
 @cross_origin()
@@ -76,6 +82,5 @@ def get_all_rest(path):
 
 
 if __name__ == "__main__":
-    CONFIG.update_cache_times()
-    download_openapi_locally()
+    before_first_request()
     app.run(debug=True, host="0.0.0.0", port=CONFIG.REST_PORT)

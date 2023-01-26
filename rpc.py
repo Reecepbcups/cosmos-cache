@@ -19,20 +19,25 @@ import CONFIG
 from CONFIG import REDIS_DB
 from HELPERS import increment_call_value, replace_rpc_text
 
-# === APP ===
-CONFIG.update_cache_times()
-RPC_ROOT_HTML = replace_rpc_text()
-
 # === FLASK ===
 rpc_app = Flask(__name__)
 sock = Sock(rpc_app)
 cors = CORS(rpc_app, resources={r"/*": {"origins": "*"}})
 
+RPC_ROOT_HTML: str
+
+
+@rpc_app.before_first_request
+def before_first_request():
+    global RPC_ROOT_HTML
+    CONFIG.update_cache_times()
+    RPC_ROOT_HTML = replace_rpc_text()
+
 
 # === ROUTES ===
 @rpc_app.route("/", methods=["GET"])
 @cross_origin()
-def get_all_rpc():
+def root():
     # get the data between :// and the final /
     base = re.search(r"\/\/.*\/", request.base_url).group(0)
     # remove any /'s
@@ -43,15 +48,17 @@ def get_all_rpc():
         r'(?<=:<br><a href="//)(.*?)(?=/abci_info\?">)', RPC_ROOT_HTML
     ).group(0)
 
-    return RPC_ROOT_HTML.replace(rpc_url, base)
+    return RPC_ROOT_HTML.replace(rpc_url, base).replace("{BASE_URL}", base)
 
 
 @rpc_app.route("/cache_info", methods=["GET"])
 @cross_origin()
-def get_cache_settings():
+def cache_info():
     """
     Updates viewable cache times (seconds) at DOMAIN/cache_info.
     Auto updates for this program on update/change automatically without restart.
+
+    We only store the data so any time its requested every X minutes, we regenerate the data.
     """
     key = f"{CONFIG.RPC_PREFIX};cache_times"
     v = REDIS_DB.get(key)
@@ -103,7 +110,7 @@ def get_rpc_endpoint(path):
 
 @rpc_app.route("/", methods=["POST"])
 @cross_origin()
-def post_endpoint():
+def post_rpc_endpoint():
     REQ_DATA: dict = request.get_json()
 
     method, params = REQ_DATA.get("method", None), REQ_DATA.get("params", None)
@@ -165,4 +172,5 @@ def websocket(ws):
 
 
 if __name__ == "__main__":
+    before_first_request()
     rpc_app.run(debug=True, host="0.0.0.0", port=CONFIG.RPC_PORT)
