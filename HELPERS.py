@@ -77,10 +77,11 @@ def replace_rpc_text() -> str:
             f"{RPC_CUSTOM_TEXT}<br>Available endpoints:<br><br>",
         )
 
-    # add cache_info endpoint. THIS REMOVES BLANK Available endpoints:<br><br>
+    # add cache_info endpoint. THIS REMOVES BLANK 'Available endpoints:<br><br>'
     RPC_ROOT_HTML = RPC_ROOT_HTML.replace(
         "Available endpoints:<br><br>",
-        f'<a href="//{CONFIG.RPC_DOMAIN}/cache_info">Cache Information</a><br><br>',
+        f'<a href="//{{BASE_URL}}/cache_info">//{{BASE_URL}}/cache_info</a><br><br>',
+        # we replace the BASE_URL on the call to the root endpoint
     )
 
     # Set RPC favicon to nothing

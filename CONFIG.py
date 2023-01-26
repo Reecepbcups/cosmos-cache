@@ -63,7 +63,7 @@ def update_cache_times():
     """
     global cache_times, DEFAULT_CACHE_SECONDS, RPC_ENDPOINTS, REST_ENDPOINTS
 
-    with open(f"{CURRENT_DIR}/cache_times.json", "r") as f:
+    with open(os.path.join(CURRENT_DIR, "cache_times.json"), "r") as f:
         cache_times = json.loads(f.read())
 
     DEFAULT_CACHE_SECONDS = cache_times.get("DEFAULT", 6)
