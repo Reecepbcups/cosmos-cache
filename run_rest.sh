@@ -1,7 +1,7 @@
 #!/bin/sh
 # https://www.awright.io/posts/7/running-multiple-instances-of-gunicorn-with-systemd
 # 
-# chmod +x rest/run_rest.sh
+# chmod +x run_rest.sh
 #
 # code /lib/systemd/system/juno_rest.service
 #
@@ -14,7 +14,7 @@
 # [Service]
 # User=root
 # Group=root
-# WorkingDirectory=/root/python-rpc-cache/rest/%i
+# WorkingDirectory=/root/python-rpc-cache/%i
 # ExecStart=/root/python-rpc-cache/run_rest.sh
 # [Install]
 # WantedBy=gunicorn.target
@@ -29,7 +29,7 @@
 WORKERS=${WORKERS:-8}
 THREADS=${THREADS:-4}
 
-cd /root/python-rpc-cache/rest
+cd /root/python-rpc-cache
 gunicorn --workers $WORKERS --threads $THREADS --preload --bind 0.0.0.0:5000 rest:app
 
 # python3 rest.py

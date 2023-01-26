@@ -6,20 +6,22 @@ from os import getenv
 import redis
 from dotenv import load_dotenv
 
-# TODO: CHANGED: uppercase
 CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 load_dotenv(os.path.join(CURRENT_DIR, ".env"))
 
-
+# =============
 # === REDIS ===
+# =============
 REDIS_URL = getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
 REDIS_DB = redis.Redis.from_url(REDIS_URL)
 
 ENABLE_COUNTER = getenv("ENABLE_COUNTER", "true").lower().startswith("t")
 INC_EVERY = int(getenv("INCREASE_COUNTER_EVERY", 10))
 
+# ===========
 # === RPC ===
+# ===========
 # TODO: CHANGED: uppercase
 RPC_PORT = int(getenv("RPC_PORT", 5001))
 RPC_PREFIX = getenv("REDIS_RPC_PREFIX", "junorpc")
@@ -34,8 +36,9 @@ RPC_WEBSOCKET = f'ws://{getenv("WEBSOCKET_ADDR", "15.204.143.232:26657")}/websoc
 
 RPC_DOMAIN = getenv("RPC_DOMAIN", "localhost:5001")
 
-
+# ============
 # === REST ===
+# ============
 REST_PORT = int(getenv("REST_PORT", 5000))
 
 API_TITLE = getenv("API_TITLE", "Swagger API")
