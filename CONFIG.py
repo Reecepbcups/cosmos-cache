@@ -22,16 +22,12 @@ INC_EVERY = int(getenv("INCREASE_COUNTER_EVERY", 10))
 # ===========
 # === RPC ===
 # ===========
-# TODO: CHANGED: uppercase
 RPC_PORT = int(getenv("RPC_PORT", 5001))
 RPC_PREFIX = getenv("REDIS_RPC_PREFIX", "junorpc")
 RPC_URL = getenv("RPC_URL", "https://juno-rpc.reece.sh:443")
-BASE_RPC = getenv("BASE_RPC", "15.204.143.232:26657")
 
 BACKUP_RPC_URL = getenv("BACKUP_RPC_URL", "https://rpc.juno.strange.love:443")
-BACKUP_BASE_RPC = getenv("BACKUP_BASE_RPC", "rpc.juno.strange.love")
 
-# TODO: Changed
 RPC_WEBSOCKET = f'ws://{getenv("WEBSOCKET_ADDR", "15.204.143.232:26657")}/websocket'
 
 RPC_DOMAIN = getenv("RPC_DOMAIN", "localhost:5001")
