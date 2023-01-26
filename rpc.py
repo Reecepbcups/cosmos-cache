@@ -19,6 +19,8 @@ from flask_cors import CORS, cross_origin
 from flask_sock import Sock
 from flask_socketio import emit
 
+FAVICON = """<link href="data:image/x-icon;base64,AAABAAEAEBAAAAAAAABoBQAAFgAAACgAAAAQAAAAIAAAAAEACAAAAAAAAAEAAAAAAAAAAAAAAAEAAAAAAAD///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" rel="icon" type="image/x-icon" />"""
+
 current_dir = os.path.dirname(os.path.realpath(__file__))
 
 load_dotenv(os.path.join(current_dir, ".env"))
@@ -40,40 +42,80 @@ data_websocket = f'ws://{getenv("WEBSOCKET_ADDR", "15.204.143.232:26657")}/webso
 RPC_DOMAIN = getenv("RPC_DOMAIN", "localhost:5001")
 
 # Load specific cache times (regex supported)
-with open(f"{current_dir}/cache_times.json", "r") as f:
-    cache_times: dict = json.loads(f.read())
+# with open(f"{current_dir}/cache_times.json", "r") as f:
+#     cache_times: dict = json.loads(f.read())
+# DEFAULT_CACHE_SECONDS = cache_times.get("DEFAULT", 6)
+# ENDPOINTS = cache_times.get("rpc", {})
 
-DEFAULT_CACHE_SECONDS = cache_times.get("DEFAULT", 6)
-ENDPOINTS = cache_times.get("rest", {})
+cache_times: dict = {}
 
-# replace RPC text to the updated domain
-try:
-    RPC_ROOT_HTML = requests.get(f"{RPC_URL}/").text.replace(BASE_RPC, RPC_DOMAIN)
-except:
-    RPC_ROOT_HTML = requests.get(f"{BACKUP_RPC_URL}/").text.replace(
-        BACKUP_BASE_RPC, RPC_DOMAIN
+
+def update_cache_times():
+    """
+    Updates any config variables which can be changed without restarting the server.
+    Useful for the /cache_info endpoint & actually applying said cache changes at any time
+    """
+    global cache_times, DEFAULT_CACHE_SECONDS, ENDPOINTS
+    with open(f"{current_dir}/cache_times.json", "r") as f:
+        cache_times = json.loads(f.read())
+
+    DEFAULT_CACHE_SECONDS = cache_times.get("DEFAULT", 6)
+    ENDPOINTS = cache_times.get("rpc", {})
+
+
+def replace_rpc_text() -> str:
+    # Get RPC format, and replace with our domain values.
+    try:
+        RPC_ROOT_HTML = requests.get(f"{RPC_URL}/").text.replace(BASE_RPC, RPC_DOMAIN)
+    except:
+        RPC_ROOT_HTML = requests.get(f"{BACKUP_RPC_URL}/").text.replace(
+            BACKUP_BASE_RPC, RPC_DOMAIN
+        )
+
+    RPC_TITLE = getenv("RPC_TITLE", "")
+    if len(RPC_TITLE) > 0:
+        RPC_ROOT_HTML = RPC_ROOT_HTML.replace(
+            "<html><body>",
+            f"<html><head><title>{RPC_TITLE}</title></head><body>",
+        )
+
+    # Puts text at the bottom, maybe put at the top in the future?
+    RPC_CUSTOM_TEXT = getenv("RPC_CUSTOM_TEXT", "").replace(
+        "{RPC_DOMAIN}", f"{RPC_DOMAIN}"
     )
+    if len(RPC_CUSTOM_TEXT) > 0:
+        RPC_ROOT_HTML = RPC_ROOT_HTML.replace(
+            "Available endpoints:<br><br>",
+            f"{RPC_CUSTOM_TEXT}<br>Available endpoints:<br><br>",
+        )
 
-RPC_TITLE = getenv("RPC_TITLE", "")
-if len(RPC_TITLE) > 0:
-    RPC_ROOT_HTML = RPC_ROOT_HTML.replace(
-        "<html><body>",
-        f"<html><head><title>{RPC_TITLE}</title></head><body>",
-    )
-
-# Puts text at the bottom, maybe put at the top in the future?
-RPC_CUSTOM_TEXT = getenv("RPC_CUSTOM_TEXT", "").replace("{RPC_DOMAIN}", f"{RPC_DOMAIN}")
-if len(RPC_CUSTOM_TEXT) > 0:
+    # add cache_info endpoint. THIS REMOVES BLANK Available endpoints:<br><br>
     RPC_ROOT_HTML = RPC_ROOT_HTML.replace(
         "Available endpoints:<br><br>",
-        f"{RPC_CUSTOM_TEXT}<br>Available endpoints:<br><br>",
+        f'<a href="//{RPC_DOMAIN}/cache_info">Cache Information</a><br><br>',
     )
 
+    # add blank favicon
+    if "<head>" in RPC_ROOT_HTML:
+        RPC_ROOT_HTML = RPC_ROOT_HTML.replace("<head>", f"<head>{FAVICON}", 1)
+    else:
+        RPC_ROOT_HTML = RPC_ROOT_HTML.replace(
+            "<html>", f"<html><head>{FAVICON}</head>", 1
+        )
 
+    return RPC_ROOT_HTML
+
+
+# === APP ===
+update_cache_times()
+RPC_ROOT_HTML = replace_rpc_text()
+
+# === FLASK ===
 rpc_app = Flask(__name__)
 sock = Sock(rpc_app)
 cors = CORS(rpc_app, resources={r"/*": {"origins": "*"}})
 
+# === REDIS ===
 REDIS_URL = getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
 rDB = redis.Redis.from_url(REDIS_URL)
 
@@ -112,10 +154,31 @@ def inc_value(key):
 
 
 def get_cache_time_seconds(path: str) -> int:
-    cache_seconds = next(
-        (v for k, v in ENDPOINTS.items() if re.match(k, path)), DEFAULT_CACHE_SECONDS
-    )
+    cache_seconds = DEFAULT_CACHE_SECONDS
+    for k, v in ENDPOINTS.items():
+        if re.match(k, path):
+            cache_seconds = v
+            break
+
     return cache_seconds
+
+
+@rpc_app.route("/cache_info", methods=["GET"])
+@cross_origin()
+def get_cache_setings():
+    """
+    Updates viewable cache times (seconds) at DOMAIN/cache_info.
+    Auto updates every 15 minutes for this program on update/change automatically without restart.
+    """
+    key = f"{PREFIX};cache_times"
+    v = rDB.get(key)
+    if v:
+        return jsonify(json.loads(v.decode("utf-8")))
+
+    update_cache_times()
+
+    rDB.setex(key, 15 * 30, json.dumps(cache_times))
+    return jsonify(cache_times)
 
 
 @rpc_app.route("/<path:path>", methods=["GET"])
