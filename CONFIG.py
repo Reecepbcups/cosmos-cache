@@ -10,6 +10,7 @@ CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 load_dotenv(os.path.join(CURRENT_DIR, ".env"))
 
+
 # =============
 # === REDIS ===
 # =============
@@ -17,7 +18,8 @@ REDIS_URL = getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
 REDIS_DB = redis.Redis.from_url(REDIS_URL)
 
 ENABLE_COUNTER = getenv("ENABLE_COUNTER", "true").lower().startswith("t")
-INC_EVERY = int(getenv("INCREASE_COUNTER_EVERY", 10))
+INC_EVERY = int(getenv("INCREASE_COUNTER_EVERY", 250))
+STATS_PASSWORD = getenv("STATS_PASSWORD", "")
 
 # ===========
 # === RPC ===
