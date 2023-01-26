@@ -5,6 +5,3 @@ List of endpoints in the .env file. Change to a JSON?
 3) Add docker / Akash support + instructions
 
 4) Example nginx config
-
-move rest into this folder as well,
-make a config folder for all variables (load on init) / class it shares

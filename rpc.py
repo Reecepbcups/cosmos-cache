@@ -74,6 +74,14 @@ def get_rpc_endpoint(path):
 
     key = f"{CONFIG.RPC_PREFIX};{url};{args}"
 
+    cache_seconds = CONFIG.get_cache_time_seconds(path, is_rpc=True)
+    if cache_seconds < 0:
+        return jsonify(
+            {
+                "error": f"cosmos endpoint cache: The path '{path}' is disabled on this node..."
+            }
+        )
+
     v = REDIS_DB.get(key)
     if v:
         increment_call_value("total_cache;get_rpc_endpoint")
@@ -82,10 +90,10 @@ def get_rpc_endpoint(path):
     try:
         req = requests.get(url, params=args)
     except Exception as e:
-        print(e)
         req = requests.get(f"{CONFIG.BACKUP_RPC_URL}/{path}", params=args)
 
-    cache_seconds = CONFIG.get_cache_time_seconds(path)
+    if req.status_code != 200:
+        return jsonify(req.json())
 
     REDIS_DB.setex(key, cache_seconds, json.dumps(req.json()))
     increment_call_value("total_outbound;get_rpc_endpoint")
@@ -101,6 +109,14 @@ def post_endpoint():
     method, params = REQ_DATA.get("method", None), REQ_DATA.get("params", None)
     key = f"{CONFIG.RPC_PREFIX};{method};{params}"
 
+    cache_seconds = CONFIG.get_cache_time_seconds(method, is_rpc=True)
+    if cache_seconds < 0:
+        return jsonify(
+            {
+                "error": f"cosmos endpoint cache: The RPC method '{method}' is disabled on this node..."
+            }
+        )
+
     v = REDIS_DB.get(key)
     if v:
         increment_call_value("total_cache;post_endpoint")
@@ -110,9 +126,9 @@ def post_endpoint():
         req = requests.post(f"{CONFIG.RPC_URL}", data=json.dumps(REQ_DATA))
     except:
         req = requests.post(f"{CONFIG.BACKUP_RPC_URL}", data=json.dumps(REQ_DATA))
-        # What if this fails too?
 
-    cache_seconds = CONFIG.get_cache_time_seconds(method)
+    if req.status_code != 200:
+        return jsonify(req.json())
 
     REDIS_DB.setex(key, cache_seconds, json.dumps(req.json()))
     increment_call_value("total_outbound;post_endpoint")
