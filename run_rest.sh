@@ -31,3 +31,5 @@ THREADS=${THREADS:-4}
 
 cd /root/python-rpc-cache/rest
 gunicorn --workers $WORKERS --threads $THREADS --preload --bind 0.0.0.0:5000 rest:app
+
+# python3 rest.py
