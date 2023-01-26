@@ -1,3 +1,4 @@
+import re
 from os import getenv
 
 import requests
@@ -13,7 +14,8 @@ total_calls = {
     "total_cache;post_endpoint": 0,
     "total_outbound;post_endpoint": 0,
     # REST:
-    # ...
+    "total_cache;get_all_rest": 0,
+    "total_outbound;get_all_rest": 0,
 }
 
 
@@ -31,6 +33,24 @@ def increment_call_value(key):
         total_calls[key] = 0
     else:
         total_calls[key] += 1
+
+
+def download_openapi_locally():
+    r = requests.get(CONFIG.OPEN_API)
+    file_loc = f"{CONFIG.CURRENT_DIR}/static/openapi.yml"
+    with open(file_loc, "w") as f:
+        f.write(r.text)
+
+
+def get_swagger_code_from_source():
+    req = requests.get(f"{CONFIG.REST_URL}")
+
+    html = req.text.replace(
+        "//unpkg.com/swagger-ui-dist@3.40.0/favicon-16x16.png",
+        "/static/rest-favicon.png",
+    )
+    html = re.sub(r"<title>.*</title>", f"<title>{CONFIG.API_TITLE}</title>", html)
+    return html
 
 
 def replace_rpc_text() -> str:
@@ -63,14 +83,10 @@ def replace_rpc_text() -> str:
         f'<a href="//{CONFIG.RPC_DOMAIN}/cache_info">Cache Information</a><br><br>',
     )
 
-    # add blank favicon (last thing)
-    if "<head>" in RPC_ROOT_HTML:
-        RPC_ROOT_HTML = RPC_ROOT_HTML.replace(
-            "<head>", f"<head>{CONFIG.RPC_FAVICON}", 1
-        )
-    else:
-        RPC_ROOT_HTML = RPC_ROOT_HTML.replace(
-            "<html>", f"<html><head>{CONFIG.RPC_FAVICON}</head>", 1
-        )
+    # Set RPC favicon to nothing
+    RPC_ROOT_HTML = RPC_ROOT_HTML.replace(
+        "<head>",
+        f'<head><link rel="icon" href="data:,">',
+    )
 
     return RPC_ROOT_HTML
