@@ -5,7 +5,7 @@
         "genesis.*": 86400,
         "block?height=.*": 21600,
         "block_results?height=.*": 21600,
-        "unconfirmed_txs": 1
+        "unconfirmed_txs": 2
     },
     "rest": {        
         "cosmos\/auth\/v1beta1\/accounts": -1,
