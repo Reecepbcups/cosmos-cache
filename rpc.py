@@ -6,6 +6,7 @@
 
 import asyncio
 import json
+import re
 
 import requests
 import websockets
@@ -32,12 +33,22 @@ cors = CORS(rpc_app, resources={r"/*": {"origins": "*"}})
 @rpc_app.route("/", methods=["GET"])
 @cross_origin()
 def get_all_rpc():
-    return RPC_ROOT_HTML
+    # get the data between :// and the final /
+    base = re.search(r"\/\/.*\/", request.base_url).group(0)
+    # remove any /'s
+    base = base.replace("/", "")
+
+    # </a><br><br>Endpoints that require arguments:<br><a href="//rpc.juno.website.xyz = rpc.juno.website.xyz
+    rpc_url = re.search(
+        r'(?<=:<br><a href="//)(.*?)(?=/abci_info\?">)', RPC_ROOT_HTML
+    ).group(0)
+
+    return RPC_ROOT_HTML.replace(rpc_url, base)
 
 
 @rpc_app.route("/cache_info", methods=["GET"])
 @cross_origin()
-def get_cache_setings():
+def get_cache_settings():
     """
     Updates viewable cache times (seconds) at DOMAIN/cache_info.
     Auto updates for this program on update/change automatically without restart.
@@ -45,7 +56,7 @@ def get_cache_setings():
     key = f"{CONFIG.RPC_PREFIX};cache_times"
     v = REDIS_DB.get(key)
     if v:
-        return jsonify(json.loads(v.decode("utf-8")))
+        return jsonify(json.loads(v))
 
     CONFIG.update_cache_times()
 
@@ -66,7 +77,7 @@ def get_rpc_endpoint(path):
     v = REDIS_DB.get(key)
     if v:
         increment_call_value("total_cache;get_rpc_endpoint")
-        return jsonify(json.loads(v.decode("utf-8")))
+        return jsonify(json.loads(v))
 
     try:
         req = requests.get(url, params=args)
@@ -93,13 +104,13 @@ def post_endpoint():
     v = REDIS_DB.get(key)
     if v:
         increment_call_value("total_cache;post_endpoint")
-        return jsonify(json.loads(v.decode("utf-8")))
+        return jsonify(json.loads(v))
 
-    # make req
     try:
         req = requests.post(f"{CONFIG.RPC_URL}", data=json.dumps(REQ_DATA))
     except:
         req = requests.post(f"{CONFIG.BACKUP_RPC_URL}", data=json.dumps(REQ_DATA))
+        # What if this fails too?
 
     cache_seconds = CONFIG.get_cache_time_seconds(method)
 

@@ -34,15 +34,11 @@ def increment_call_value(key):
 
 
 def replace_rpc_text() -> str:
-    # Get RPC format, and replace with our domain values.
+    # we replace after on requests of the user, then repalce this text to our cache endpoint at time of requests to root endpoint
     try:
-        RPC_ROOT_HTML = requests.get(f"{CONFIG.RPC_URL}/").text.replace(
-            CONFIG.BASE_RPC, CONFIG.RPC_DOMAIN
-        )
+        RPC_ROOT_HTML = requests.get(f"{CONFIG.RPC_URL}/").text
     except:
-        RPC_ROOT_HTML = requests.get(f"{CONFIG.BACKUP_RPC_URL}/").text.replace(
-            CONFIG.BACKUP_RPC_URL, CONFIG.RPC_DOMAIN
-        )
+        RPC_ROOT_HTML = requests.get(f"{CONFIG.BACKUP_RPC_URL}/").text
 
     RPC_TITLE = getenv("RPC_TITLE", "")
     if len(RPC_TITLE) > 0:
@@ -67,7 +63,7 @@ def replace_rpc_text() -> str:
         f'<a href="//{CONFIG.RPC_DOMAIN}/cache_info">Cache Information</a><br><br>',
     )
 
-    # add blank favicon
+    # add blank favicon (last thing)
     if "<head>" in RPC_ROOT_HTML:
         RPC_ROOT_HTML = RPC_ROOT_HTML.replace(
             "<head>", f"<head>{CONFIG.RPC_FAVICON}", 1
