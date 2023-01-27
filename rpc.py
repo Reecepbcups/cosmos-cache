@@ -95,7 +95,9 @@ def get_rpc_endpoint(path):
         increment_call_value("total_cache;get_rpc_endpoint")
         return jsonify(json.loads(v))
 
-    return RPC_HANDLER.handle_single_rpc_get_requests(path, key, cache_seconds, args)
+    return jsonify(
+        RPC_HANDLER.handle_single_rpc_get_requests(path, key, cache_seconds, args)
+    )
 
 
 @rpc_app.route("/", methods=["POST"])
