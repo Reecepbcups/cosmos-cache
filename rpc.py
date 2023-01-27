@@ -113,6 +113,13 @@ def get_rpc_endpoint(path):
 def post_rpc_endpoint():
     REQ_DATA: dict = request.get_json()
 
+    # if REQ_DATA is a list, its a batchhttp request from TendermintClient34.create client
+    # TODO: cache this? or allow direct pass through?
+    # Add duplicate post as well for backup like we do below
+    if isinstance(REQ_DATA, list):
+        req = requests.post(f"{CONFIG.RPC_URL}", json=REQ_DATA)
+        return jsonify(req.json())
+
     method, params = REQ_DATA.get("method", None), REQ_DATA.get("params", None)
     key = f"{CONFIG.RPC_PREFIX};{method};{params}"
 
@@ -132,7 +139,10 @@ def post_rpc_endpoint():
     try:
         req = requests.post(f"{CONFIG.RPC_URL}", data=json.dumps(REQ_DATA))
     except:
-        req = requests.post(f"{CONFIG.BACKUP_RPC_URL}", data=json.dumps(REQ_DATA))
+        req = requests.post(
+            f"{CONFIG.BACKUP_RPC_URL}",
+            data=json.dumps(REQ_DATA),
+        )
 
     if req.status_code != 200:
         return jsonify(req.json())
