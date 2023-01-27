@@ -6,9 +6,14 @@ from os import getenv
 import redis
 from dotenv import load_dotenv
 
-CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
+HEADERS = {
+    'accept': 'application/json',
+    'Content-Type': 'application/json',
+}
 
-load_dotenv(os.path.join(CURRENT_DIR, ".env"))
+PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
+
+load_dotenv(os.path.join(PROJECT_DIR, ".env"))
 
 
 # =============
@@ -61,7 +66,7 @@ def update_cache_times():
     """
     global cache_times, DEFAULT_CACHE_SECONDS, RPC_ENDPOINTS, REST_ENDPOINTS
 
-    with open(os.path.join(CURRENT_DIR, "cache_times.json"), "r") as f:
+    with open(os.path.join(PROJECT_DIR, "cache_times.json"), "r") as f:
         cache_times = json.loads(f.read())
 
     DEFAULT_CACHE_SECONDS = cache_times.get("DEFAULT", 6)

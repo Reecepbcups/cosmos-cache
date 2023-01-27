@@ -5,3 +5,5 @@ List of endpoints in the .env file. Change to a JSON?
 3) Add docker / Akash support + instructions
 
 4) Example nginx config
+
+native Coingecko support (RPC & REST? Probably just REST)

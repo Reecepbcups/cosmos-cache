@@ -8,16 +8,16 @@ import asyncio
 import json
 import re
 
-import requests
 import websockets
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
 from flask_sock import Sock
 from flask_socketio import emit
 
-import CONFIG
+import CONFIG as CONFIG
 from CONFIG import REDIS_DB
 from HELPERS import increment_call_value, replace_rpc_text
+from RequestsHandler import RPCHandler
 
 # === FLASK ===
 rpc_app = Flask(__name__)
@@ -25,13 +25,15 @@ sock = Sock(rpc_app)
 cors = CORS(rpc_app, resources={r"/*": {"origins": "*"}})
 
 RPC_ROOT_HTML: str
+RPC_HANDLER: RPCHandler
 
 
 @rpc_app.before_first_request
 def before_first_request():
-    global RPC_ROOT_HTML
+    global RPC_ROOT_HTML, RPC_HANDLER
     CONFIG.update_cache_times()
     RPC_ROOT_HTML = replace_rpc_text()
+    RPC_HANDLER = RPCHandler()
 
 
 # === ROUTES ===
@@ -76,10 +78,9 @@ def cache_info():
 def get_rpc_endpoint(path):
     global total_calls
 
-    url = f"{CONFIG.RPC_URL}/{path}"
     args = request.args
 
-    key = f"{CONFIG.RPC_PREFIX};{url};{args}"
+    key = f"{CONFIG.RPC_PREFIX};{path};{args}"
 
     cache_seconds = CONFIG.get_cache_time_seconds(path, is_rpc=True)
     if cache_seconds < 0:
@@ -94,42 +95,22 @@ def get_rpc_endpoint(path):
         increment_call_value("total_cache;get_rpc_endpoint")
         return jsonify(json.loads(v))
 
-    try:
-        req = requests.get(url, params=args)
-    except Exception as e:
-        req = requests.get(f"{CONFIG.BACKUP_RPC_URL}/{path}", params=args)
-
-    if req.status_code != 200:
-        return jsonify(req.json())
-
-    REDIS_DB.setex(key, cache_seconds, json.dumps(req.json()))
-    increment_call_value("total_outbound;get_rpc_endpoint")
-
-    return req.json()
+    return RPC_HANDLER.handle_single_rpc_get_requests(path, key, cache_seconds, args)
 
 
 @rpc_app.route("/", methods=["POST"])
 @cross_origin()
 def post_rpc_endpoint():
-    REQ_DATA: dict = request.get_json()
+    REQ_DATA = request.get_json()
 
-    # if REQ_DATA is a list, it's a BatcHttp request from TendermintClient34.create client
+    # BatchHTTPClient's send in a list of JSONRPCRequests
     if isinstance(REQ_DATA, list):
-        # TODO: add cache here in the future possible? since each elem in the list has a method and params like below
         increment_call_value("total_outbound;post_endpoint", amount=len(REQ_DATA))
-        try:
-            req = requests.post(f"{CONFIG.RPC_URL}", json=REQ_DATA)
-        except:
-            req = requests.post(
-                f"{CONFIG.BACKUP_RPC_URL}",
-                json=REQ_DATA,
-            )
-
-        return req.json()
+        return jsonify(RPC_HANDLER.handle_batch_http_request(REQ_DATA))
 
     # If its a single RPC request, the following is used.
-    # TODO: put these in their own functions and do better...
-    method, params = REQ_DATA.get("method", None), REQ_DATA.get("params", None)
+    method = REQ_DATA.get("method", None)
+    params = REQ_DATA.get("params", None)
     key = f"{CONFIG.RPC_PREFIX};{method};{params}"
 
     cache_seconds = CONFIG.get_cache_time_seconds(method, is_rpc=True)
@@ -145,23 +126,11 @@ def post_rpc_endpoint():
         increment_call_value("total_cache;post_endpoint")
         return jsonify(json.loads(v))
 
-    data = json.dumps(REQ_DATA)
-    try:
-        req = requests.post(f"{CONFIG.RPC_URL}", data=data)
-    except:
-        req = requests.post(
-            f"{CONFIG.BACKUP_RPC_URL}",
-            data=data,
+    return jsonify(
+        RPC_HANDLER.handle_single_rpc_post_request(
+            json.dumps(REQ_DATA), key, cache_seconds
         )
-
-    # Return Error before caching
-    if req.status_code != 200:
-        return jsonify(req.json())
-
-    REDIS_DB.setex(key, cache_seconds, json.dumps(req.json()))
-    increment_call_value("total_outbound;post_endpoint")
-
-    return req.json()
+    )
 
 
 # === socket bridge ===
