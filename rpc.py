@@ -116,6 +116,7 @@ def post_rpc_endpoint():
     # if REQ_DATA is a list, it's a BatcHttp request from TendermintClient34.create client
     if isinstance(REQ_DATA, list):
         # TODO: add cache here in the future possible? since each elem in the list has a method and params like below
+        increment_call_value("total_outbound;post_endpoint", amount=len(REQ_DATA))
         try:
             req = requests.post(f"{CONFIG.RPC_URL}", json=REQ_DATA)
         except:

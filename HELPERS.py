@@ -19,7 +19,7 @@ total_calls = {
 }
 
 
-def increment_call_value(key):
+def increment_call_value(key, amount: int = 1):
     global total_calls
 
     if CONFIG.ENABLE_COUNTER == False:
@@ -32,7 +32,7 @@ def increment_call_value(key):
         REDIS_DB.incr(f"{CONFIG.RPC_PREFIX};{key}", amount=total_calls[key])
         total_calls[key] = 0
     else:
-        total_calls[key] += 1
+        total_calls[key] += amount
 
 
 def download_openapi_locally():
