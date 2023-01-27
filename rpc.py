@@ -113,13 +113,21 @@ def get_rpc_endpoint(path):
 def post_rpc_endpoint():
     REQ_DATA: dict = request.get_json()
 
-    # if REQ_DATA is a list, its a batchhttp request from TendermintClient34.create client
-    # TODO: cache this? or allow direct pass through?
-    # Add duplicate post as well for backup like we do below
+    # if REQ_DATA is a list, it's a BatcHttp request from TendermintClient34.create client
     if isinstance(REQ_DATA, list):
-        req = requests.post(f"{CONFIG.RPC_URL}", json=REQ_DATA)
-        return jsonify(req.json())
+        # TODO: add cache here in the future possible? since each elem in the list has a method and params like below
+        try:
+            req = requests.post(f"{CONFIG.RPC_URL}", json=REQ_DATA)
+        except:
+            req = requests.post(
+                f"{CONFIG.BACKUP_RPC_URL}",
+                json=REQ_DATA,
+            )
 
+        return req.json()
+
+    # If its a single RPC request, the following is used.
+    # TODO: put these in their own functions and do better...
     method, params = REQ_DATA.get("method", None), REQ_DATA.get("params", None)
     key = f"{CONFIG.RPC_PREFIX};{method};{params}"
 
@@ -136,14 +144,16 @@ def post_rpc_endpoint():
         increment_call_value("total_cache;post_endpoint")
         return jsonify(json.loads(v))
 
+    data = json.dumps(REQ_DATA)
     try:
-        req = requests.post(f"{CONFIG.RPC_URL}", data=json.dumps(REQ_DATA))
+        req = requests.post(f"{CONFIG.RPC_URL}", data=data)
     except:
         req = requests.post(
             f"{CONFIG.BACKUP_RPC_URL}",
-            data=json.dumps(REQ_DATA),
+            data=data,
         )
 
+    # Return Error before caching
     if req.status_code != 200:
         return jsonify(req.json())
 
