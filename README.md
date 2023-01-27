@@ -1,8 +1,22 @@
-# cosmos-endpoint-cache
+# Cosmos Endpoint Cache
 
 Optimize Cosmos query calls by caching responses with a local or remote database.
 
 This program sits on top of another server and acts as a middleware proxy between the requesting client and the actual cosmos RPC/API server.
+
+This program supports
+
+- Variable length cache times (for both RPC methods & REST URL endpoints)
+- Disable specific endpoints entirely from being queried (ex: REST API /accounts)
+
+- Cached RPC request
+- Cached REST request
+
+- Swagger + OpenAPI support (openapi.yml cached)
+- HttpBatchClient (for RPC with Tendermint 0.34 client)
+- Statistics (optional /stats endpoint with password)
+
+- Websocket basic passthrough support for Keplr wallet
 
 ## Requirements
 
