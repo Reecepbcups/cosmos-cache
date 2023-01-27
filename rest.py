@@ -88,9 +88,14 @@ def get_rest(path):
 @app.route("/<path:path>", methods=["POST"])
 @cross_origin()
 def post_rest(path):
-    REQ_DATA = json.loads(json.dumps(request.get_json(), separators=(",", ":")))
-    print(type(REQ_DATA))
-    return jsonify(REST_HANDLER.handle_single_rest_post_requests(path, REQ_DATA))
+    # REQ_DATA = json.loads(json.dumps(request.get_json(), separators=(",", ":")))
+    # print(type(REQ_DATA))
+    # return jsonify(REST_HANDLER.handle_single_rest_post_requests(path, REQ_DATA))
+    return jsonify(
+        {
+            "error": f"cosmos endpoint cache: The path '{path}' does not yet have support on this REST API..."
+        }
+    )
 
 
 if __name__ == "__main__":
