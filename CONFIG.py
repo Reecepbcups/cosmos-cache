@@ -7,8 +7,8 @@ import redis
 from dotenv import load_dotenv
 
 HEADERS = {
-    'accept': 'application/json',
-    'Content-Type': 'application/json',
+    "accept": "application/json",
+    "Content-Type": "application/json",
 }
 
 PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -21,6 +21,9 @@ load_dotenv(os.path.join(PROJECT_DIR, ".env"))
 # =============
 REDIS_URL = getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
 REDIS_DB = redis.Redis.from_url(REDIS_URL)
+# allow a max of 1000 connections to redis
+# REDIS_DB.config_set("maxclients", 1000)
+
 
 ENABLE_COUNTER = getenv("ENABLE_COUNTER", "true").lower().startswith("t")
 INC_EVERY = int(getenv("INCREASE_COUNTER_EVERY", 250))

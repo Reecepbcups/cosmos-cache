@@ -1,18 +1,18 @@
 {
     "DEFAULT": 6,
     "rpc": {        
-        "genesis": 86400,
-        "genesis.*": 86400,
-        "block?height=.*": 21600,
-        "block_results?height=.*": 21600,
-        "unconfirmed_txs": 2
+        "genesis": 259200,
+        "genesis.*": 259200,
+        "block?height=.*": 3600,
+        "block_results.*": 3600,
+        "unconfirmed_txs": 3
     },
     "rest": {        
         "cosmos\/auth\/v1beta1\/accounts": -1,
 
-        ".*\/params": 300,
+        ".*\/params": 3600,
         ".*delegations": 300,
-        ".*slashes": 30,
+        ".*slashes": 60,
         ".*commission": 30,
         ".*outstanding_rewards": 30,
         "cosmos\/gov\/v1beta1\/proposals.*": 60,

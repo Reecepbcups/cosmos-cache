@@ -6,6 +6,8 @@ import CONFIG
 from CONFIG import REDIS_DB
 from HELPERS import increment_call_value
 
+timeout = httpx.Timeout(5.0, connect=5.0, read=4.0)
+
 
 class RestApiHandler:
     def handle_single_rest_get_requests(
@@ -60,12 +62,9 @@ class RPCHandler:
     def handle_single_rpc_post_request(self, data, key, cache_seconds) -> dict:
         # TODO: add round robin query here for multiple RPC nodes. If a node errors, save to cache for X period to not use (unless its the only 1)
         try:
-            req = httpx.post(f"{CONFIG.RPC_URL}", data=data)
+            req = httpx.post(f"{CONFIG.RPC_URL}", data=data, timeout=timeout)
         except:
-            req = httpx.post(
-                f"{CONFIG.BACKUP_RPC_URL}",
-                data=data,
-            )
+            req = httpx.post(f"{CONFIG.BACKUP_RPC_URL}", data=data, timeout=timeout)
 
         # only saves to cache if the request was successful
         if req.status_code == 200:
@@ -78,9 +77,13 @@ class RPCHandler:
         self, path, key, cache_seconds: int, param_args
     ) -> dict:
         try:
-            req = httpx.get(f"{CONFIG.RPC_URL}/{path}", params=param_args)
+            req = httpx.get(
+                f"{CONFIG.RPC_URL}/{path}", params=param_args, timeout=timeout
+            )
         except Exception as e:
-            req = httpx.get(f"{CONFIG.BACKUP_RPC_URL}/{path}", params=param_args)
+            req = httpx.get(
+                f"{CONFIG.BACKUP_RPC_URL}/{path}", params=param_args, timeout=timeout
+            )
 
         if req.status_code == 200:
             REDIS_DB.setex(key, cache_seconds, json.dumps(req.json()))

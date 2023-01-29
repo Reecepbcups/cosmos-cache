@@ -6,4 +6,7 @@ List of endpoints in the .env file. Change to a JSON?
 
 4) Example nginx config
 
+5) Save keys in HSETS? so RPC->all RPC calls. SOrt based off time maybe>?
+6) Save long term requests to JSON / persistant storage for future calls?
+
 native Coingecko support (RPC & REST? Probably just REST)

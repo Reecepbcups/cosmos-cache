@@ -29,9 +29,9 @@
 
 PORT=${PORT:-5000}
 
-WORKERS=${WORKERS:-8}
-THREADS=${THREADS:-2}
-W_CONN=${W_CONN:-2}
+WORKERS=${WORKERS:-2}
+THREADS=${THREADS:-4}
+W_CONN=${W_CONN:-1000}
 BACKLOG=${BACKLOG:-2048}
 
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
