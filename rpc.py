@@ -4,20 +4,22 @@
 # pip install --upgrade urllib3
 # ----------------------------------------------
 
-import asyncio
+# import asyncio
 import json
 import re
 
-import websockets
+# import websockets
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
 from flask_sock import Sock
-from flask_socketio import emit
 
 import CONFIG as CONFIG
 from CONFIG import REDIS_DB
 from HELPERS import increment_call_value, replace_rpc_text
 from RequestsHandler import RPCHandler
+
+# from flask_socketio import emit
+
 
 # === FLASK ===
 rpc_app = Flask(__name__)
@@ -145,22 +147,20 @@ def post_rpc_endpoint():
 # curl -X GET -H "Content-Type: application/json" -H "x-cosmos-block-height: 6619410" http://15.204.143.232:1317/cosmos/bank/v1beta1/balances/juno10r39fueph9fq7a6lgswu4zdsg8t3gxlq670lt0
 
 
-@sock.route("/websocket")
-def websocket(ws):
-    print("websocket connected")
-
-    async def handle_subscribe():
-        async with websockets.connect(CONFIG.RPC_WEBSOCKET) as websocket:
-            while True:
-                # receive data from the websocket
-                data = await websocket.recv()
-                if data == "close" or data == None:
-                    emit("close", data)
-                    await websocket.close()
-                    break
-                emit("message", data)
-
-    asyncio.run(handle_subscribe())
+# @sock.route("/websocket")
+# def websocket(ws):
+#     print("websocket connected")
+#     async def handle_subscribe():
+#         async with websockets.connect(CONFIG.RPC_WEBSOCKET) as websocket:
+#             while True:
+#                 # receive data from the websocket
+#                 data = await websocket.recv()
+#                 if data == "close" or data == None:
+#                     emit("close", data)
+#                     await websocket.close()
+#                     break
+#                 emit("message", data)
+#     asyncio.run(handle_subscribe())
 
 
 if __name__ == "__main__":

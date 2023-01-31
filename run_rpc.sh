@@ -26,11 +26,14 @@
 # sudo systemctl stop juno_rpc.service
 # sudo systemctl restart juno_rpc.service
 # sudo systemctl enable juno_rpc.service
+#
+# crontab -e
+# 0 8 * * * systemctl restart juno_rpc
 
 PORT=${PORT:-5001}
 
-WORKERS=${WORKERS:-7}
-THREADS=${THREADS:-4}
+WORKERS=${WORKERS:-4}
+THREADS=${THREADS:-6}
 W_CONN=${W_CONN:-1000}
 BACKLOG=${BACKLOG:-2048}
 
