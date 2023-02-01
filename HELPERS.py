@@ -36,6 +36,7 @@ def increment_call_value(key, amount: int = 1):
 
 
 def download_openapi_locally():
+    # TODO: What if there is no swagger API?
     r = httpx.get(CONFIG.OPEN_API)
     file_loc = f"{CONFIG.PROJECT_DIR}/static/openapi.yml"
     with open(file_loc, "w") as f:

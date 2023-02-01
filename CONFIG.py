@@ -38,7 +38,7 @@ RPC_URL = getenv("RPC_URL", "https://juno-rpc.reece.sh:443")
 
 BACKUP_RPC_URL = getenv("BACKUP_RPC_URL", "https://rpc.juno.strange.love:443")
 
-RPC_WEBSOCKET = f'ws://{getenv("WEBSOCKET_ADDR", "15.204.143.232:26657")}/websocket'
+# RPC_WEBSOCKET = f'ws://{getenv("WEBSOCKET_ADDR", "15.204.143.232:26657")}/websocket' # DISABLED CURRENTLY
 
 RPC_DOMAIN = getenv("RPC_DOMAIN", "localhost:5001")
 
@@ -69,7 +69,13 @@ def update_cache_times():
     """
     global cache_times, DEFAULT_CACHE_SECONDS, RPC_ENDPOINTS, REST_ENDPOINTS
 
-    with open(os.path.join(PROJECT_DIR, "cache_times.json"), "r") as f:
+    file_to_use = os.path.join(PROJECT_DIR, "configs", "cache_times.json")
+    custom = os.path.join(PROJECT_DIR, "cache_times.json")
+
+    if os.path.exists(custom):
+        file_to_use = custom
+
+    with open(file_to_use, "r") as f:
         cache_times = json.loads(f.read())
 
     DEFAULT_CACHE_SECONDS = cache_times.get("DEFAULT", 6)
