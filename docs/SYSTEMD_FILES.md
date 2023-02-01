@@ -30,6 +30,7 @@ Environment=WORKERS=4
 Environment=THREADS=6
 Environment=W_CONN=1000
 Environment=BACKLOG=2048
+Environment=PORT=5001
 [Install]
 WantedBy=gunicorn.target
 # ============
@@ -74,6 +75,7 @@ Environment=WORKERS=2
 Environment=THREADS=2
 Environment=W_CONN=1000
 Environment=BACKLOG=2048
+Environment=PORT=5000
 [Install]
 WantedBy=gunicorn.target
 # ============
