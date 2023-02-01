@@ -1,8 +1,4 @@
 # Reece Williams | https://reece.sh | Jan 2023
-# ----------------------------------------------
-# pip install Flask redis flask_caching requests websockets
-# pip install --upgrade urllib3
-# ----------------------------------------------
 
 # import asyncio
 import json

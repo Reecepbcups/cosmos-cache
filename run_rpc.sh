@@ -1,32 +1,11 @@
 #!/bin/sh
-# 
-# chmod +x run_rpc.sh
 #
-# sudo nano /lib/systemd/system/juno_rpc.service
-#
-# If you are running as root, `sudo python -m pip install -r requirements.txt`
-#
-# [Unit]
-# Description=gunicorn rpc
-# After=network.target
-# PartOf=gunicorn.target
-# # Since systemd 235 reloading target can pass through
-# ReloadPropagatedFrom=gunicorn.target
-# [Service]
-# User=root
-# Group=root
-# WorkingDirectory=/root/cosmos-endpoint-cache/%i
-# ExecStart=/root/cosmos-endpoint-cache/run_rpc.sh
-# [Install]
-# WantedBy=gunicorn.target
+# Directions ./docs/SYSTEMD_FILES.md 
 #
 # sudo systemctl daemon-reload 
-# sudo systemctl status juno_rpc.service
 # sudo systemctl start juno_rpc.service
-# sudo systemctl stop juno_rpc.service
-# sudo systemctl restart juno_rpc.service
-# sudo systemctl enable juno_rpc.service
 #
+# Restart nightly:
 # crontab -e
 # 0 8 * * * systemctl restart juno_rpc
 

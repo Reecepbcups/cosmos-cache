@@ -1,31 +1,11 @@
 #!/bin/sh
-# 
+#
 # chmod +x run_rest.sh
 #
-# sudo nano /lib/systemd/system/juno_rest.service
-#
-# If you are running as root, `sudo python -m pip install -r requirements.txt`
-#
-# [Unit]
-# Description=gunicorn rest
-# After=network.target
-# PartOf=gunicorn.target
-# # Since systemd 235 reloading target can pass through
-# ReloadPropagatedFrom=gunicorn.target
-# [Service]
-# User=root
-# Group=root
-# WorkingDirectory=/root/cosmos-endpoint-cache/%i
-# ExecStart=/root/cosmos-endpoint-cache/run_rest.sh
-# [Install]
-# WantedBy=gunicorn.target
+# Directions ./docs/SYSTEMD_FILES.md 
 #
 # sudo systemctl daemon-reload 
-# sudo systemctl status juno_rest.service
 # sudo systemctl start juno_rest.service
-# sudo systemctl stop juno_rest.service
-# sudo systemctl restart juno_rest.service
-# sudo systemctl enable juno_rest.service
 
 PORT=${PORT:-5000}
 

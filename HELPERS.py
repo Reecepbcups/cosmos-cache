@@ -36,6 +36,7 @@ def increment_call_value(key, amount: int = 1):
 
 
 def download_openapi_locally():
+    # TODO: What if there is no swagger API?
     r = httpx.get(CONFIG.OPEN_API)
     file_loc = f"{CONFIG.PROJECT_DIR}/static/openapi.yml"
     with open(file_loc, "w") as f:
@@ -68,9 +69,7 @@ def replace_rpc_text() -> str:
         )
 
     # Puts text at the bottom, maybe put at the top in the future?
-    RPC_CUSTOM_TEXT = getenv("RPC_CUSTOM_TEXT", "").replace(
-        "{RPC_DOMAIN}", f"{CONFIG.RPC_DOMAIN}"
-    )
+    RPC_CUSTOM_TEXT = getenv("RPC_CUSTOM_TEXT", "")
     if len(RPC_CUSTOM_TEXT) > 0:
         RPC_ROOT_HTML = RPC_ROOT_HTML.replace(
             "Available endpoints:<br><br>",

@@ -1,1 +1,7 @@
 __pycache__/
+.mypy*/*
+
+# ignores project root directory configs
+/.env
+/redis.json
+/cache_times.json

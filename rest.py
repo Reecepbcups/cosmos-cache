@@ -1,8 +1,4 @@
 # Reece Williams | https://reece.sh | Jan 2023
-# ----------------------------------------------
-# pip install Flask redis flask_caching requests
-# pip install --upgrade urllib3
-# ----------------------------------------------
 
 import json
 
@@ -35,7 +31,6 @@ def before_first_request():
     REST_HANDLER = RestApiHandler()
 
 
-# if route is just /, return the openapi swagger ui
 @app.route("/", methods=["GET"])
 @cross_origin()
 def root():

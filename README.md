@@ -16,69 +16,67 @@ This program supports
 - HttpBatchClient (for RPC with Tendermint 0.34 client)
 - Statistics (optional /stats endpoint with password)
 
-- Websocket basic passthrough support for Keplr wallet
+~~- Websocket basic passthrough support for Keplr wallet (TODO)~~
+~~-Index blocks (TODO)~~
 
-## Requirements
+## Pre-Requirements
 
 - A Cosmos RPC / REST server endpoint (state synced, full node, or archive).
 - A Redis server (local, or remote).
 - A reverse proxy (to forward subdomain -> the endpoint cache on a machine)
 
+## Where to run
+
+Ideally, you should run this on your RPC/REST Node for localhost queries. However, you can also run on other infra including on your reverse proxy itself, or another separate node.
+This makes it possible to run on cloud providers like Akash, AWS, GCP, Azure, etc.
+
 ---
 
-## Setup
-
-```bash
-python -m pip install -r requirements.txt --upgrade
-```
-
-### Redis
+### Redis Install
 
 ```sh
+# System
 sudo apt install redis-server
 
 sudo pacman -Sy redis-server
 
 systemctl start redis
 systemctl enable redis
-```
 
-### or docker
-
-```sh
+# or Docker
 docker run -d --name redis -p 6379:6379 redis
 ```
 
-### or Akash (docker)
+## Setup
 
-[Cloudmos.io Deploy Tool](https://cloudmos.io/cloud-deploy)
-[Akash Deploy File](https://github.com/akash-network/awesome-akash/blob/master/redis/deploy.yaml)
+```bash
+python -m pip install -r requirements/requirements.txt --upgrade
 
-## Installation
+# Edit the ENV file to your needs
+cp configs/.env .env
 
-open `run_rpc.sh` and `./rest/run_rest.sh`
-Create the Systemd service files, then start with the preferred variable settings.
-...
+# Update which endpoints you want to disable / allow (regex) & how long to cache each for.
+cp configs/cache_times.json cache_times.json
 
----
+# Optional: custom redis client configuration
+cp configs/redis_config.json redis_config.json
 
-## Nginx / Reverse Proxy
+# THen run to ensure it was setup correctly
+python3 rest.py
+# ctrl + c
+python3 rpc.py
+# ctrl + c
 
-docs here...
+# If all is good, continue on.
+# NOTE: You can only run 1 of each locally at a time because WSGI is a pain. Requires Systemd as a service to run both in parrallel.
+```
+
+## Running in Production
+
+- [Create The Systemd files for the REST and RPC](./docs/SYSTEMD_FILES.md)
 
 ---
 
 ## Documentation
 
-### Variable Length Cache
-
-In the `cache_times.json` file, you can specify specific endpoints and how long said queries should persist in the cache.
-This is useful for large queries such as /validators which may return 100+ validators. This data does not change often, making it useful for caching for longer periods of time.
-
-If you wish to disable the cache, you can set the value to 0 for said endpoint. If you wish to disable the endpoint query entirely, set to a value less than 0 (such as -1).
-By default the cosmos/auth/v1beta1/accounts endpoint is disabled, as it temporarily halts the node.
-
-This file uses regex pattern matching as keys, with values as the number of seconds to cache once it has been called.
-For python strings, you must prefix any `*` you find with a `.`. So to match "random" in "my 8 random11 string", you would do `.*random.*` to match all before and after.
-
-This is ONLY the path, which means it does not start with a `/`.
+- [Configuration Values](./docs/CONFIG_VALUES.md)
