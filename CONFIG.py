@@ -16,7 +16,7 @@ PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
 env_file = os.path.join(PROJECT_DIR, ".env")
 if not os.path.exists(env_file):
     # error
-    print("No .env file found. Please copy it and edit. `cp configs/..env .env`")
+    print("No .env file found. Please copy it and edit. `cp configs/.env .env`")
     exit(1)
 
 load_dotenv(env_file)

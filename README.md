@@ -16,7 +16,8 @@ This program supports
 - HttpBatchClient (for RPC with Tendermint 0.34 client)
 - Statistics (optional /stats endpoint with password)
 
-- Websocket basic passthrough support for Keplr wallet
+~~- Websocket basic passthrough support for Keplr wallet (TODO)~~
+~~-Index blocks (TODO)~~
 
 ## Requirements
 
@@ -26,19 +27,7 @@ This program supports
 
 ---
 
-## Setup
-
-```bash
-python -m pip install -r requirements/requirements.txt --upgrade
-
-cp configs/.env .env
-# Edit the ENV file to your needs
-
-cp configs/cache_times.json cache_times.json
-# Update which endpoints you want to disable / allow (regex) & how long to cache each for.
-```
-
-### Redis
+### Redis Install
 
 ```sh
 # System
@@ -53,10 +42,28 @@ systemctl enable redis
 docker run -d --name redis -p 6379:6379 redis
 ```
 
-### or Akash (TODO)
+## Setup
 
-[Cloudmos.io Deploy Tool](https://cloudmos.io/cloud-deploy)
-[Akash Deploy File](https://github.com/akash-network/awesome-akash/blob/master/redis/deploy.yaml)
+```bash
+python -m pip install -r requirements/requirements.txt --upgrade
+
+# Edit the ENV file to your needs
+cp configs/.env .env
+
+# Update which endpoints you want to disable / allow (regex) & how long to cache each for.
+cp configs/cache_times.json cache_times.json
+
+# Optional: custom redis client configuration
+cp configs/redis_config.json redis_config.json
+
+# THen run to ensure it was setup correctly
+python3 rest.py
+# ctrl + c
+python3 rpc.py
+# ctrl + c
+
+# If all is good, continue on.
+```
 
 ## Installation
 
