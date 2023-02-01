@@ -19,11 +19,16 @@ This program supports
 ~~- Websocket basic passthrough support for Keplr wallet (TODO)~~
 ~~-Index blocks (TODO)~~
 
-## Requirements
+## Pre-Requirements
 
 - A Cosmos RPC / REST server endpoint (state synced, full node, or archive).
 - A Redis server (local, or remote).
 - A reverse proxy (to forward subdomain -> the endpoint cache on a machine)
+
+## Where to run
+
+Ideally, you should run this on your RPC/REST Node for localhost queries. However, you can also run on other infra including on your reverse proxy itself, or another separate node.
+This makes it possible to run on cloud providers like Akash, AWS, GCP, Azure, etc.
 
 ---
 
@@ -63,14 +68,13 @@ python3 rpc.py
 # ctrl + c
 
 # If all is good, continue on.
+# NOTE: You can only run 1 of each locally at a time because WSGI is a pain. Requires Systemd as a service to run both in parrallel.
 ```
 
-## Installation
+## Running in Production
 
 open `run_rpc.sh` and `./run_rest.sh`
-Create the Systemd service files, then start with the preferred variable settings.
-...
-
+Create the systemd service files, then start with the preferred variable settings.
 ---
 
 ## Nginx / Reverse Proxy
@@ -82,15 +86,4 @@ Your normal NGINX configs work here, so long as it points / round robins to the 
 
 ## Documentation
 
-### Variable Length Cache
-
-In the `cache_times.json` file, you can specify specific endpoints and how long said queries should persist in the cache.
-This is useful for large queries such as /validators which may return 100+ validators. This data does not change often, making it useful for caching for longer periods of time.
-
-If you wish to disable the cache, you can set the value to 0 for the said endpoint. If you wish to disable the endpoint query entirely, set it to a value less than 0 (such as -1).
-By default, the cosmos/auth/v1beta1/accounts endpoint is disabled, as it temporarily halts the node.
-
-This file uses regex pattern matching as keys, with values as the number of seconds to cache once it has been called.
-For python strings, you must prefix any `*` you find with a `.`. So to match "random" in "my 8 random11 string", you would do `.*random.*` to match all before and after.
-
-This is ONLY the path, which means it does not start with a `/`.
+- [Configuration Values](./docs/CONFIG_VALUES.md)

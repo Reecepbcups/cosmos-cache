@@ -17,6 +17,8 @@
 # Group=root
 # WorkingDirectory=/root/cosmos-endpoint-cache/%i
 # ExecStart=/root/cosmos-endpoint-cache/run_rest.sh
+# Environment=WORKERS=2
+# Environment=WORKERS=4
 # [Install]
 # WantedBy=gunicorn.target
 #
