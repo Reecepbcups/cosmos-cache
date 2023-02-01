@@ -73,14 +73,7 @@ python3 rpc.py
 
 ## Running in Production
 
-open `run_rpc.sh` and `./run_rest.sh`
-Create the systemd service files, then start with the preferred variable settings.
----
-
-## Nginx / Reverse Proxy
-
-Your normal NGINX configs work here, so long as it points / round robins to the exposed application ports
-(5000 and 5001 by default in the .env file)
+- [Create The Systemd files for the REST and RPC](./docs/SYSTEMD_FILES.md)
 
 ---
 
