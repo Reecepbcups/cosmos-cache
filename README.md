@@ -50,7 +50,7 @@ docker run -d --name redis -p 6379:6379 redis
 ## Setup
 
 ```bash
-python -m pip install -r requirements/requirements.txt --upgrade
+python3 -m pip install -r requirements/requirements.txt --upgrade
 
 # Edit the ENV file to your needs
 cp configs/.env .env
