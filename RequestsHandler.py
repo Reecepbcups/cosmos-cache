@@ -24,6 +24,7 @@ class RestApiHandler:
 
         return req.json()
 
+    # This breaks right now, very few ever will do this. Needs to be done in the future though, but not a priority
     # def handle_single_rest_post_requests(self, path, data: dict) -> dict:
     #     # simulate, txs
     #     try:

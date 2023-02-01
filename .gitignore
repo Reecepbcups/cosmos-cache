@@ -1,2 +1,5 @@
 __pycache__/
 .mypy*/*
+
+# ignores the .env in the root directory
+/.env

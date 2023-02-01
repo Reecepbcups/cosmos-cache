@@ -13,7 +13,25 @@ HEADERS = {
 
 PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
 
-load_dotenv(os.path.join(PROJECT_DIR, ".env"))
+env_file = os.path.join(PROJECT_DIR, ".env")
+if not os.path.exists(env_file):
+    # error
+    print("No .env file found. Please copy it and edit. `cp configs/..env .env`")
+    exit(1)
+
+load_dotenv(env_file)
+
+## == Helper == ##
+def get_config_file(filename: str):
+    """
+    Gets the custom config file if it exist. If not, uses the custom one if allowed.
+    """
+    # custom file if they moved to the project root dir
+    custom_config = os.path.join(PROJECT_DIR, filename)
+    if os.path.exists(custom_config):
+        return custom_config
+
+    return os.path.join(PROJECT_DIR, "configs", filename)  # default
 
 
 # =============
@@ -21,8 +39,12 @@ load_dotenv(os.path.join(PROJECT_DIR, ".env"))
 # =============
 REDIS_URL = getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
 REDIS_DB = redis.Redis.from_url(REDIS_URL)
-# allow a max of 1000 connections to redis
-# REDIS_DB.config_set("maxclients", 1000)
+
+redis_config = get_config_file("redis.json")
+values = json.loads(open(redis_config, "r").read()).items()
+if len(values) > 0:
+    for k, v in values:
+        REDIS_DB.config_set(k, v)
 
 
 ENABLE_COUNTER = getenv("ENABLE_COUNTER", "true").lower().startswith("t")
@@ -34,13 +56,12 @@ STATS_PASSWORD = getenv("STATS_PASSWORD", "")
 # ===========
 RPC_PORT = int(getenv("RPC_PORT", 5001))
 RPC_PREFIX = getenv("REDIS_RPC_PREFIX", "junorpc")
-RPC_URL = getenv("RPC_URL", "https://juno-rpc.reece.sh:443")
 
+RPC_URL = getenv("RPC_URL", "https://juno-rpc.reece.sh:443")
 BACKUP_RPC_URL = getenv("BACKUP_RPC_URL", "https://rpc.juno.strange.love:443")
 
-# RPC_WEBSOCKET = f'ws://{getenv("WEBSOCKET_ADDR", "15.204.143.232:26657")}/websocket' # DISABLED CURRENTLY
-
-RPC_DOMAIN = getenv("RPC_DOMAIN", "localhost:5001")
+# DISABLED CURRENTLY, Future TODO
+# RPC_WEBSOCKET = f'ws://{getenv("WEBSOCKET_ADDR", "15.204.143.232:26657")}/websocket'
 
 # ============
 # === REST ===
@@ -69,14 +90,8 @@ def update_cache_times():
     """
     global cache_times, DEFAULT_CACHE_SECONDS, RPC_ENDPOINTS, REST_ENDPOINTS
 
-    file_to_use = os.path.join(PROJECT_DIR, "configs", "cache_times.json")
-    custom = os.path.join(PROJECT_DIR, "cache_times.json")
-
-    if os.path.exists(custom):
-        file_to_use = custom
-
-    with open(file_to_use, "r") as f:
-        cache_times = json.loads(f.read())
+    cache_times_config = get_config_file("cache_times.json")
+    cache_times = json.loads(open(cache_times_config, "r").read())
 
     DEFAULT_CACHE_SECONDS = cache_times.get("DEFAULT", 6)
     RPC_ENDPOINTS = cache_times.get("rpc", {})
