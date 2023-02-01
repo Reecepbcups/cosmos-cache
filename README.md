@@ -29,34 +29,38 @@ This program supports
 ## Setup
 
 ```bash
-python -m pip install -r requirements.txt --upgrade
+python -m pip install -r requirements/requirements.txt --upgrade
+
+cp configs/.env .env
+# Edit the ENV file to your needs
+
+cp configs/cache_times.json cache_times.json
+# Update which endpoints you want to disable / allow (regex) & how long to cache each for.
 ```
 
 ### Redis
 
 ```sh
+# System
 sudo apt install redis-server
 
 sudo pacman -Sy redis-server
 
 systemctl start redis
 systemctl enable redis
-```
 
-### or docker
-
-```sh
+# or Docker
 docker run -d --name redis -p 6379:6379 redis
 ```
 
-### or Akash (docker)
+### or Akash (TODO)
 
 [Cloudmos.io Deploy Tool](https://cloudmos.io/cloud-deploy)
 [Akash Deploy File](https://github.com/akash-network/awesome-akash/blob/master/redis/deploy.yaml)
 
 ## Installation
 
-open `run_rpc.sh` and `./rest/run_rest.sh`
+open `run_rpc.sh` and `./run_rest.sh`
 Create the Systemd service files, then start with the preferred variable settings.
 ...
 
@@ -64,7 +68,8 @@ Create the Systemd service files, then start with the preferred variable setting
 
 ## Nginx / Reverse Proxy
 
-docs here...
+Your normal NGINX configs work here, so long as it points / round robins to the exposed application ports
+(5000 and 5001 by default in the .env file)
 
 ---
 
