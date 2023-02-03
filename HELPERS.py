@@ -83,6 +83,12 @@ def replace_rpc_text() -> str:
         # we replace the BASE_URL on the call to the root endpoint
     )
 
+    RPC_ROOT_HTML = RPC_ROOT_HTML.replace(
+        "/cache_info</a><br><br>",
+        f'/cache_info</a><br><a href="//{{BASE_URL}}/prices">//{{BASE_URL}}/prices</a><br><br>',
+        # we replace the BASE_URL on the call to the root endpoint
+    )
+
     # Set RPC favicon to nothing
     RPC_ROOT_HTML = RPC_ROOT_HTML.replace(
         "<head>",
