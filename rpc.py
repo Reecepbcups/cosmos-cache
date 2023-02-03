@@ -12,7 +12,7 @@ from flask_sock import Sock
 import CONFIG as CONFIG
 from COINGECKO import Coingecko
 from CONFIG import REDIS_DB
-from HELPERS import hide_data, increment_call_value, replace_rpc_text
+from HELPERS import hide_rpc_data, increment_call_value, replace_rpc_text
 from RequestsHandler import RPCHandler
 
 # from flask_socketio import emit
@@ -75,16 +75,6 @@ def cache_info():
     return jsonify(CONFIG.cache_times)
 
 
-
-def hide_rpc_data(res: dict, endpoint_path: str):
-    if endpoint_path.lower().startswith("status"):
-        res = hide_data(res, "result.node_info.listen_addr", CONFIG.RPC_LISTEN_ADDRESS)
-        res = hide_data(res, "result.node_info.moniker", CONFIG.NODE_MONIKER)
-        res = hide_data(res, "result.node_info.version", CONFIG.NODE_TM_VERSION)
-
-    return res
-  
-
 @rpc_app.route("/prices", methods=["GET"])
 @cross_origin()
 def coingecko():
@@ -96,7 +86,6 @@ def coingecko():
         return jsonify(GECKO.get_price())
     else:
         return jsonify({"error": "prices are not enabled on this node..."})
-
 
 
 @rpc_app.route("/<path:path>", methods=["GET"])
@@ -122,7 +111,6 @@ def get_rpc_endpoint(path: str):
         return jsonify(json.loads(v))
 
     res = RPC_HANDLER.handle_single_rpc_get_requests(path, key, cache_seconds, args)
-    res = hide_rpc_data(res, path)
 
     return jsonify(res)
 
@@ -156,7 +144,7 @@ def post_rpc_endpoint():
         return jsonify(json.loads(v))
 
     res = RPC_HANDLER.handle_single_rpc_post_request(
-        json.dumps(REQ_DATA), key, cache_seconds
+        json.dumps(REQ_DATA), key, method, cache_seconds
     )
     res = hide_rpc_data(res, method)
 

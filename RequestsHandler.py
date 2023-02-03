@@ -4,7 +4,7 @@ import httpx
 
 import CONFIG
 from CONFIG import REDIS_DB
-from HELPERS import increment_call_value
+from HELPERS import hide_rpc_data, increment_call_value
 
 timeout = httpx.Timeout(5.0, connect=5.0, read=4.0)
 
@@ -46,6 +46,7 @@ class RPCHandler:
         This function handles batch http requests from TendermintClient34.create client
         """
         # TODO: add cache here in the future possible? since each elem in the list has a method and params like below
+        # TODO: add hide_rpc_data here for each if they req the status method
         try:
             req = httpx.post(f"{CONFIG.RPC_URL}", json=REQ_DATA)
         except:
@@ -60,7 +61,7 @@ class RPCHandler:
 
         return req.json()
 
-    def handle_single_rpc_post_request(self, data, key, cache_seconds) -> dict:
+    def handle_single_rpc_post_request(self, data, key, method, cache_seconds) -> dict:
         # TODO: add round robin query here for multiple RPC nodes. If a node errors, save to cache for X period to not use (unless its the only 1)
         try:
             req = httpx.post(f"{CONFIG.RPC_URL}", data=data, timeout=timeout)
@@ -68,11 +69,12 @@ class RPCHandler:
             req = httpx.post(f"{CONFIG.BACKUP_RPC_URL}", data=data, timeout=timeout)
 
         # only saves to cache if the request was successful
+        res = hide_rpc_data(req.json(), method)
         if req.status_code == 200:
-            REDIS_DB.setex(key, cache_seconds, json.dumps(req.json()))
+            REDIS_DB.setex(key, cache_seconds, json.dumps(res))
             increment_call_value("total_outbound;post_endpoint")
 
-        return req.json()
+        return res
 
     def handle_single_rpc_get_requests(
         self, path, key, cache_seconds: int, param_args
@@ -86,8 +88,9 @@ class RPCHandler:
                 f"{CONFIG.BACKUP_RPC_URL}/{path}", params=param_args, timeout=timeout
             )
 
+        res = hide_rpc_data(req.json(), path)
         if req.status_code == 200:
-            REDIS_DB.setex(key, cache_seconds, json.dumps(req.json()))
+            REDIS_DB.setex(key, cache_seconds, json.dumps(res))
             increment_call_value("total_outbound;get_rpc_endpoint")
 
-        return req.json()
+        return res

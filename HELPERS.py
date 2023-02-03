@@ -143,7 +143,7 @@ def get_stats_html():
     """
 
 
-def hide_data(json: dict, str_path: str, cfg_value: str) -> dict:
+def _hide_data(json: dict, str_path: str, cfg_value: str) -> dict:
     """
     cfg_value is some string
     path is the json path in string form. For example, ['result']['node_info'] is result.node_info
@@ -166,3 +166,12 @@ def hide_data(json: dict, str_path: str, cfg_value: str) -> dict:
             return json
     parent[path[-1]] = cfg_value
     return json
+
+
+def hide_rpc_data(res: dict, endpoint_path: str):
+    if endpoint_path.lower().startswith("status"):
+        res = _hide_data(res, "result.node_info.listen_addr", CONFIG.RPC_LISTEN_ADDRESS)
+        res = _hide_data(res, "result.node_info.moniker", CONFIG.NODE_MONIKER)
+        res = _hide_data(res, "result.node_info.version", CONFIG.NODE_TM_VERSION)
+
+    return res
