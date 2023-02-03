@@ -10,6 +10,7 @@ from flask_cors import CORS, cross_origin
 from flask_sock import Sock
 
 import CONFIG as CONFIG
+from COINGECKO import Coingecko
 from CONFIG import REDIS_DB
 from HELPERS import hide_data, increment_call_value, replace_rpc_text
 from RequestsHandler import RPCHandler
@@ -25,13 +26,16 @@ cors = CORS(rpc_app, resources={r"/*": {"origins": "*"}})
 RPC_ROOT_HTML: str
 RPC_HANDLER: RPCHandler
 
+GECKO: Coingecko
+
 
 @rpc_app.before_first_request
 def before_first_request():
-    global RPC_ROOT_HTML, RPC_HANDLER
+    global RPC_ROOT_HTML, RPC_HANDLER, GECKO
     CONFIG.update_cache_times()
     RPC_ROOT_HTML = replace_rpc_text()
     RPC_HANDLER = RPCHandler()
+    GECKO = Coingecko()
 
 
 # === ROUTES ===
@@ -71,6 +75,7 @@ def cache_info():
     return jsonify(CONFIG.cache_times)
 
 
+
 def hide_rpc_data(res: dict, endpoint_path: str):
     if endpoint_path.lower().startswith("status"):
         res = hide_data(res, "result.node_info.listen_addr", CONFIG.RPC_LISTEN_ADDRESS)
@@ -78,6 +83,20 @@ def hide_rpc_data(res: dict, endpoint_path: str):
         res = hide_data(res, "result.node_info.version", CONFIG.NODE_TM_VERSION)
 
     return res
+  
+
+@rpc_app.route("/prices", methods=["GET"])
+@cross_origin()
+def coingecko():
+    """
+    Gets the prices from coingecko as defined in the .env file.
+    """
+    if CONFIG.COINGECKO_ENABLED:
+        # caching handled in the class
+        return jsonify(GECKO.get_price())
+    else:
+        return jsonify({"error": "prices are not enabled on this node..."})
+
 
 
 @rpc_app.route("/<path:path>", methods=["GET"])

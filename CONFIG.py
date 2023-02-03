@@ -51,6 +51,13 @@ ENABLE_COUNTER = getenv("ENABLE_COUNTER", "true").lower().startswith("t")
 INC_EVERY = int(getenv("INCREASE_COUNTER_EVERY", 250))
 STATS_PASSWORD = getenv("STATS_PASSWORD", "")
 
+# === Coingecko ===
+COINGECKO_ENABLED = getenv("COINGECKO_ENABLED", "true").lower().startswith("t")
+COINGECKO_API_KEY = getenv("COINGECKO_API_KEY", "")
+COINGECKO_CACHE_SECONDS = int(getenv("COINGECKO_CACHE_SECONDS", 6))
+COINGECKO_IDS = getenv("COINGECKO_IDS", "cosmos,juno-network,osmosis").split(",")
+COINGECKO_FIAT = getenv("COINGECKO_FIAT", "usd,eur").split(",")
+
 # ===========
 # === RPC ===
 # ===========
