@@ -135,3 +135,28 @@ def get_stats_html():
         <p>Percent Cached: {round((rest_cache / (rest_cache + rest_outbound)) * 100, 2)}%</p>
     {CLOSING_HTML}
     """
+
+
+def hide_data(json: dict, str_path: str, cfg_value: str) -> dict:
+    """
+    cfg_value is some string
+    path is the json path in string form. For example, ['result']['node_info'] is result.node_info
+    json is teh default json response
+
+    Given this, if the path exist in the json, edit said path and update it to be the cfg_value
+    Then return the updated JSON
+
+    else:
+        return the original JSON
+    """
+    if len(str_path) == 0 or len(cfg_value) == 0:
+        return json
+
+    path = str_path.split(".")
+    parent = json
+    for key in path[:-1]:
+        parent = parent.get(key, {})
+        if not parent:
+            return json
+    parent[path[-1]] = cfg_value
+    return json
