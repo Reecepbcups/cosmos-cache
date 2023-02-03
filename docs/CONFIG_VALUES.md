@@ -2,6 +2,21 @@
 
 This section contains information about different configuration files used by this program.
 
+## Workers vs Threads
+
+This program uses a combination of workers and threads to handle the requests. Increase the number of threads greater than workers to handle more throughput requests.
+Ideally, you should set this to = `(CPUS/2) * (THREADS*2)`. Though you may find that `(CPU/4) * (THREADS*4)` is more optimal. More threads are better.
+
+## .env
+
+For the best performance, disabled the counter and/or increase the interval to a high number (say 10,000) like so. By doing this, it will drastically reduce the number of logging increment requests to the Redis server instance. (So every query, then adds +1 in memory. Then dumps to Redis at call 10,000 in a single incr(10000) call to be most efficient)
+
+```env
+# == QUERY INCREMENT LOGGING ===
+ENABLE_COUNTER=false
+INCREASE_COUNTER_EVERY=10000
+```
+
 ## Variable Length Cache
 
 In the `cache_times.json` file, you can specify specific endpoints and how long said queries should persist in the cache.

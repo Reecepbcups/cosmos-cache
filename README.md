@@ -68,7 +68,9 @@ python3 rpc.py
 # ctrl + c
 
 # If all is good, continue on.
-# NOTE: You can only run 1 of each locally at a time because WSGI is a pain. Requires Systemd as a service to run both in parrallel.
+# NOTE: You can only run 1 of each locally at a time because WSGI is a pain. Requires Systemd as a service to run both in parallel.
+
+# Then point your NGINX / CADDY config to this port rather than the default 26657 / 1317 endpoints
 ```
 
 ## Running in Production
