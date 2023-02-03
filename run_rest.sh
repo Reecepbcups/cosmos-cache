@@ -16,5 +16,6 @@ BACKLOG=${BACKLOG:-2048}
 
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd $THIS_DIR
+# python3 -m pip install -r requirements/requirements.txt
 
 gunicorn --workers $WORKERS --threads $THREADS --worker-connections $W_CONN --backlog $BACKLOG --bind 0.0.0.0:$PORT --preload rest:app
