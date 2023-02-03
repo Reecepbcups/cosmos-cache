@@ -1,9 +1,0 @@
-2) Round Robin multiple endpoints
-List of endpoints in the .env file. Change to a JSON?
-.gitignore env / json file. Require the cp thing + documents
-
-5) Save long term requests to JSON / persistent storage for future calls? Does anyone actually want this for blocks?
-- Good for indexing servers.
-- Build an indexer in this too?
-
-native Coingecko support (RPC & REST? Probably just REST)
