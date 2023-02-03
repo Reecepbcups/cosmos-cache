@@ -54,7 +54,6 @@ STATS_PASSWORD = getenv("STATS_PASSWORD", "")
 # === Coingecko ===
 COINGECKO_ENABLED = getenv("COINGECKO_ENABLED", "true").lower().startswith("t")
 COINGECKO_API_KEY = getenv("COINGECKO_API_KEY", "")
-COINGECKO_CACHE_SECONDS = int(getenv("COINGECKO_CACHE_SECONDS", 6))
 COINGECKO_IDS = getenv("COINGECKO_IDS", "cosmos,juno-network,osmosis").split(",")
 COINGECKO_FIAT = getenv("COINGECKO_FIAT", "usd,eur").split(",")
 
@@ -93,6 +92,7 @@ cache_times: dict = {}
 DEFAULT_CACHE_SECONDS: int = 6
 RPC_ENDPOINTS: dict = {}
 REST_ENDPOINTS: dict = {}
+COINGECKO_CACHE: dict = {}
 
 # === CACHE HELPER ===
 def update_cache_times():
@@ -100,7 +100,7 @@ def update_cache_times():
     Updates any config variables which can be changed without restarting the server.
     Useful for the /cache_info endpoint & actually applying said cache changes at any time
     """
-    global cache_times, DEFAULT_CACHE_SECONDS, RPC_ENDPOINTS, REST_ENDPOINTS
+    global cache_times, DEFAULT_CACHE_SECONDS, RPC_ENDPOINTS, REST_ENDPOINTS, COINGECKO_CACHE
 
     cache_times_config = get_config_file("cache_times.json")
     cache_times = json.loads(open(cache_times_config, "r").read())
@@ -108,6 +108,7 @@ def update_cache_times():
     DEFAULT_CACHE_SECONDS = cache_times.get("DEFAULT", 6)
     RPC_ENDPOINTS = cache_times.get("rpc", {})
     REST_ENDPOINTS = cache_times.get("rest", {})
+    COINGECKO_CACHE = cache_times.get("coingecko", {})
 
 
 def get_cache_time_seconds(path: str, is_rpc: bool) -> int:

@@ -1,5 +1,8 @@
 {
     "DEFAULT": 6,
+    "coingecko": {
+        "seconds": 6
+    },
     "rpc": {        
         "genesis": 259200,
         "genesis.*": 259200,
