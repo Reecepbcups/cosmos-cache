@@ -12,7 +12,7 @@ from flask_sock import Sock
 import CONFIG as CONFIG
 from COINGECKO import Coingecko
 from CONFIG import REDIS_DB
-from HELPERS import increment_call_value, replace_rpc_text
+from HELPERS import hide_data, increment_call_value, replace_rpc_text
 from RequestsHandler import RPCHandler
 
 # from flask_socketio import emit
@@ -75,6 +75,16 @@ def cache_info():
     return jsonify(CONFIG.cache_times)
 
 
+
+def hide_rpc_data(res: dict, endpoint_path: str):
+    if endpoint_path.lower().startswith("status"):
+        res = hide_data(res, "result.node_info.listen_addr", CONFIG.RPC_LISTEN_ADDRESS)
+        res = hide_data(res, "result.node_info.moniker", CONFIG.NODE_MONIKER)
+        res = hide_data(res, "result.node_info.version", CONFIG.NODE_TM_VERSION)
+
+    return res
+  
+
 @rpc_app.route("/prices", methods=["GET"])
 @cross_origin()
 def coingecko():
@@ -88,9 +98,10 @@ def coingecko():
         return jsonify({"error": "prices are not enabled on this node..."})
 
 
+
 @rpc_app.route("/<path:path>", methods=["GET"])
 @cross_origin()
-def get_rpc_endpoint(path):
+def get_rpc_endpoint(path: str):
     global total_calls
 
     args = request.args
@@ -110,9 +121,10 @@ def get_rpc_endpoint(path):
         increment_call_value("total_cache;get_rpc_endpoint")
         return jsonify(json.loads(v))
 
-    return jsonify(
-        RPC_HANDLER.handle_single_rpc_get_requests(path, key, cache_seconds, args)
-    )
+    res = RPC_HANDLER.handle_single_rpc_get_requests(path, key, cache_seconds, args)
+    res = hide_rpc_data(res, path)
+
+    return jsonify(res)
 
 
 @rpc_app.route("/", methods=["POST"])
@@ -143,11 +155,12 @@ def post_rpc_endpoint():
         increment_call_value("total_cache;post_endpoint")
         return jsonify(json.loads(v))
 
-    return jsonify(
-        RPC_HANDLER.handle_single_rpc_post_request(
-            json.dumps(REQ_DATA), key, cache_seconds
-        )
+    res = RPC_HANDLER.handle_single_rpc_post_request(
+        json.dumps(REQ_DATA), key, cache_seconds
     )
+    res = hide_rpc_data(res, method)
+
+    return jsonify(res)
 
 
 # === socket bridge ===

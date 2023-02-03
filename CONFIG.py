@@ -83,6 +83,11 @@ BACKUP_REST_URL = getenv("BACKUP_REST_URL", f"https://api.juno.strange.love")
 
 OPEN_API = f"{REST_URL}/static/openapi.yml"
 
+# Security
+RPC_LISTEN_ADDRESS = getenv("RPC_LISTEN_ADDRESS", "")
+NODE_MONIKER = getenv("NODE_MONIKER", "")
+NODE_TM_VERSION = getenv("NODE_TM_VERSION", "")
+
 # === Cache Times ===
 cache_times: dict = {}
 DEFAULT_CACHE_SECONDS: int = 6
