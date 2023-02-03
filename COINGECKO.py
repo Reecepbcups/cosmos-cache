@@ -51,7 +51,7 @@ class Coingecko:
         updated_coins = {}
         for k, v in coins.items():
             symbol = str(symbols.get(k, k)).upper()
-            updated_coins[symbol] = v
+            updated_coins[symbol] = {"coingecko-id": k, "prices": v}
 
         data = {
             "coins": updated_coins,
