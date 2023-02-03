@@ -4,7 +4,7 @@ import httpx
 
 import CONFIG
 from CONFIG import REDIS_DB
-from HELPERS import hide_rpc_data, increment_call_value
+from HELPERS import hide_rest_data, hide_rpc_data, increment_call_value
 
 timeout = httpx.Timeout(5.0, connect=5.0, read=4.0)
 
@@ -18,11 +18,12 @@ class RestApiHandler:
         except:
             req = httpx.get(f"{CONFIG.BACKUP_REST_URL}/{path}", params=param_args)
 
+        res = hide_rest_data(req.json(), path)
         if req.status_code == 200:
-            REDIS_DB.setex(key, cache_seconds, json.dumps(req.json()))
+            REDIS_DB.setex(key, cache_seconds, json.dumps(res))
             increment_call_value("total_outbound;get_all_rest")
 
-        return req.json()
+        return res
 
     # This breaks right now, very few ever will do this. Needs to be done in the future though, but not a priority
     # def handle_single_rest_post_requests(self, path, data: dict) -> dict:

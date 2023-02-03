@@ -47,7 +47,6 @@ def root():
 @app.route("/<path:path>", methods=["GET"])
 @cross_origin()
 def get_rest(path):
-
     if path == "stats":
         # https://url/stats?password=123
         if (
