@@ -20,7 +20,7 @@ def set_cache_for_time_if_valid(
         increment_call_value(call_key)
 
         if cache_seconds == Mode.FOR_BLOCK_TIME.value:  # -2
-            cache_seconds = CONFIG.OTHER_CONFIGURATION.get("block_time_seconds", 6)
+            cache_seconds = 7  # avg block time
 
         if cache_seconds > 0:
             # is a cache
@@ -91,6 +91,10 @@ class RPCHandler:
 
         # only saves to cache if the request was successful
         res = hide_rpc_data(req.json(), method)
+
+        set_cache_for_time_if_valid(
+            req.status_code, "total_outbound;post_endpoint", cache_seconds, key, res
+        )
 
         return res
 

@@ -1,12 +1,15 @@
 # Reece Williams | https://reece.sh | Jan 2023
 
 import json
+import logging
+import threading
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
 
 import CONFIG as CONFIG
 from CONFIG import REDIS_DB
+from CONNECT_WEBSOCKET import TendermintRPCWebSocket
 from HELPERS import (
     Mode,
     download_openapi_locally,
@@ -32,6 +35,12 @@ def before_first_request():
     download_openapi_locally()
     REST_HANDLER = RestApiHandler()
 
+    # future: # future: https://stackoverflow.com/questions/24101724/gunicorn-with-multiple-workers-is-there-an-easy-way-to-execute-certain-code-onl
+    tmrpc = TendermintRPCWebSocket(enableSignal=False, logLevel=logging.DEBUG)
+    t = threading.Thread(target=tmrpc.ws.run_forever)
+    t.daemon = True
+    t.start()
+
 
 @app.route("/", methods=["GET"])
 @cross_origin()
@@ -45,7 +54,6 @@ def root():
     return REST_SWAGGER_HTML
 
 
-# return all queries
 @app.route("/<path:path>", methods=["GET"])
 @cross_origin()
 def get_rest(path):

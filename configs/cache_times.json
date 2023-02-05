@@ -1,17 +1,18 @@
 {
-    "DEFAULT": 6,
+    "DEFAULT": -2,
     "coingecko": {
         "seconds": 6
     },
-    "other": {
-        "block_time_seconds": 6
-    },
     "rpc": {        
-        "genesis": 259200,
+        "health.*": -2,
+        "abci_info.*": -2,
+        "status.*": -2,
+                
+        "unconfirmed_txs": 3,
+
         "genesis.*": 259200,
         "block?height=.*": 3600,
-        "block_results.*": 3600,
-        "unconfirmed_txs": 3
+        "block_results.*": 3600
     },
     "rest": {        
         "cosmos\/auth\/v1beta1\/accounts": -1,

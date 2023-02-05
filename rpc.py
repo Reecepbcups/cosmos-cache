@@ -42,12 +42,11 @@ def before_first_request():
     RPC_HANDLER = RPCHandler()
     GECKO = Coingecko()
 
-    #
-    # x = threading.Thread(target=TendermintRPCWebSocket().start)
-    # x.start()
-    #
+    # future: https://stackoverflow.com/questions/24101724/gunicorn-with-multiple-workers-is-there-an-easy-way-to-execute-certain-code-onl
     tmrpc = TendermintRPCWebSocket(enableSignal=False, logLevel=logging.DEBUG)
-    threading.Thread(target=tmrpc.ws.run_forever).start()
+    t = threading.Thread(target=tmrpc.ws.run_forever)
+    t.daemon = True
+    t.start()
 
 
 # === ROUTES ===
