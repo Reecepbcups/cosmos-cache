@@ -108,7 +108,7 @@ def get_rpc_endpoint(path: str):
     args = request.args
 
     cache_seconds = CONFIG.get_cache_time_seconds(path, is_rpc=True)
-    if cache_seconds == Mode.DISABLED:
+    if cache_seconds == Mode.DISABLED.value:
         return jsonify(
             {
                 "error": f"cosmos endpoint cache: The path '{path}' is disabled on this node..."
@@ -142,7 +142,7 @@ def post_rpc_endpoint():
     params = REQ_DATA.get("params", None)
 
     cache_seconds = CONFIG.get_cache_time_seconds(method, is_rpc=True)
-    if cache_seconds == Mode.DISABLED:
+    if cache_seconds == Mode.DISABLED.value:
         return jsonify(
             {
                 "error": f"cosmos endpoint cache: The RPC method '{method}' is disabled on this node..."

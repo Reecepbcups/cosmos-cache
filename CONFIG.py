@@ -125,8 +125,4 @@ def get_cache_time_seconds(path: str, is_rpc: bool) -> int:
         if re.match(k, path):
             cache_seconds = seconds
 
-    if cache_seconds == Mode.FOR_BLOCK_TIME:
-        # if we clear every block time, we set = to 7 seconds since we will manually clear it via websocket subscription
-        cache_seconds = 7
-
     return cache_seconds

@@ -62,7 +62,7 @@ def get_rest(path):
     args = request.args
 
     cache_seconds = CONFIG.get_cache_time_seconds(path, is_rpc=False)
-    if cache_seconds == Mode.DISABLED:
+    if cache_seconds == Mode.DISABLED.value:
         return jsonify(
             {
                 "error": f"cosmos endpoint cache: The path '{path}' is disabled on this node..."
