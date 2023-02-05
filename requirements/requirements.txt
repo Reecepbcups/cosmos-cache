@@ -1,7 +1,9 @@
 # python3 -m pip install -r requirements/requirements.txt
 # sudo python3 -m pip install -r requirements/requirements.txt
 python-dotenv
-websockets
+
+websocket-client # import websocket
+rel
 
 redis
 httpx

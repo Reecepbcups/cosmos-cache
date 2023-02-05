@@ -6,6 +6,8 @@ from os import getenv
 import redis
 from dotenv import load_dotenv
 
+from HELPERS_TYPES import Mode
+
 HEADERS = {
     "accept": "application/json",
     "Content-Type": "application/json",
@@ -66,8 +68,7 @@ RPC_PREFIX = getenv("REDIS_RPC_PREFIX", "junorpc")
 RPC_URL = getenv("RPC_URL", "https://juno-rpc.reece.sh:443")
 BACKUP_RPC_URL = getenv("BACKUP_RPC_URL", "https://rpc.juno.strange.love:443")
 
-# DISABLED CURRENTLY, Future TODO
-# RPC_WEBSOCKET = f'ws://{getenv("WEBSOCKET_ADDR", "15.204.143.232:26657")}/websocket'
+RPC_WEBSOCKET = getenv("WEBSOCKET_ADDR", "ws://15.204.143.232:26657/websocket")
 
 # ============
 # === REST ===
@@ -88,8 +89,9 @@ NODE_MONIKER = getenv("NODE_MONIKER", "")
 NODE_TM_VERSION = getenv("NODE_TM_VERSION", "")
 
 # === Cache Times ===
-cache_times: dict = {}
 DEFAULT_CACHE_SECONDS: int = 6
+
+cache_times: dict = {}
 RPC_ENDPOINTS: dict = {}
 REST_ENDPOINTS: dict = {}
 COINGECKO_CACHE: dict = {}
@@ -112,10 +114,15 @@ def update_cache_times():
 
 
 def get_cache_time_seconds(path: str, is_rpc: bool) -> int:
+    """
+    Returns an endpoints time to cache in seconds
+    """
     endpoints = RPC_ENDPOINTS if is_rpc else REST_ENDPOINTS
 
+    cache_seconds = DEFAULT_CACHE_SECONDS
     for k, seconds in endpoints.items():
         if re.match(k, path):
-            return seconds
+            cache_seconds = seconds
+            break
 
-    return DEFAULT_CACHE_SECONDS
+    return cache_seconds

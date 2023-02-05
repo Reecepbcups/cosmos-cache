@@ -5,8 +5,24 @@ import httpx
 import CONFIG
 from CONFIG import REDIS_DB
 from HELPERS import hide_rest_data, hide_rpc_data, increment_call_value
+from HELPERS_TYPES import Mode
 
 timeout = httpx.Timeout(5.0, connect=5.0, read=4.0)
+
+
+def set_cache_for_time_if_valid(
+    status_code: int, call_key: str, cache_seconds: int, redis_key: str, res: dict
+):
+
+    if status_code == 200:
+        increment_call_value(call_key)
+
+        if cache_seconds == Mode.FOR_BLOCK_TIME.value:  # -2
+            cache_seconds = 6  # avg block time. So if the websocket stops for some reason, still 6sec TTL
+
+        if cache_seconds > 0:
+            # is a cache
+            REDIS_DB.setex(redis_key, cache_seconds, json.dumps(res))
 
 
 class RestApiHandler:
@@ -19,9 +35,10 @@ class RestApiHandler:
             req = httpx.get(f"{CONFIG.BACKUP_REST_URL}/{path}", params=param_args)
 
         res = hide_rest_data(req.json(), path)
-        if req.status_code == 200:
-            REDIS_DB.setex(key, cache_seconds, json.dumps(res))
-            increment_call_value("total_outbound;get_all_rest")
+
+        set_cache_for_time_if_valid(
+            req.status_code, "total_outbound;get_all_rest", cache_seconds, key, res
+        )
 
         return res
 
@@ -57,7 +74,6 @@ class RPCHandler:
             )
 
         if req.status_code == 200:
-            # REDIS_DB.setex(key, cache_seconds, json.dumps(req.json()))
             increment_call_value("total_outbound;batch_http", len(REQ_DATA))
 
         return req.json()
@@ -71,9 +87,10 @@ class RPCHandler:
 
         # only saves to cache if the request was successful
         res = hide_rpc_data(req.json(), method)
-        if req.status_code == 200:
-            REDIS_DB.setex(key, cache_seconds, json.dumps(res))
-            increment_call_value("total_outbound;post_endpoint")
+
+        set_cache_for_time_if_valid(
+            req.status_code, "total_outbound;post_endpoint", cache_seconds, key, res
+        )
 
         return res
 
@@ -90,8 +107,9 @@ class RPCHandler:
             )
 
         res = hide_rpc_data(req.json(), path)
-        if req.status_code == 200:
-            REDIS_DB.setex(key, cache_seconds, json.dumps(res))
-            increment_call_value("total_outbound;get_rpc_endpoint")
+
+        set_cache_for_time_if_valid(
+            req.status_code, "total_outbound;get_rpc_endpoint", cache_seconds, key, res
+        )
 
         return res

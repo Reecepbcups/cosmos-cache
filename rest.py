@@ -1,17 +1,22 @@
 # Reece Williams | https://reece.sh | Jan 2023
 
 import json
+import logging
+import threading
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
 
 import CONFIG as CONFIG
 from CONFIG import REDIS_DB
+from CONNECT_WEBSOCKET import TendermintRPCWebSocket
 from HELPERS import (
+    Mode,
     download_openapi_locally,
     get_stats_html,
     get_swagger_code_from_source,
     increment_call_value,
+    ttl_block_only,
 )
 from RequestsHandler import RestApiHandler
 
@@ -30,6 +35,11 @@ def before_first_request():
     download_openapi_locally()
     REST_HANDLER = RestApiHandler()
 
+    tmrpc = TendermintRPCWebSocket(enableSignal=False, logLevel=logging.DEBUG)
+    t = threading.Thread(target=tmrpc.ws.run_forever)
+    t.daemon = True
+    t.start()
+
 
 @app.route("/", methods=["GET"])
 @cross_origin()
@@ -43,7 +53,6 @@ def root():
     return REST_SWAGGER_HTML
 
 
-# return all queries
 @app.route("/<path:path>", methods=["GET"])
 @cross_origin()
 def get_rest(path):
@@ -60,14 +69,14 @@ def get_rest(path):
     args = request.args
 
     cache_seconds = CONFIG.get_cache_time_seconds(path, is_rpc=False)
-    if cache_seconds < 0:
+    if cache_seconds == Mode.DISABLED.value:
         return jsonify(
             {
                 "error": f"cosmos endpoint cache: The path '{path}' is disabled on this node..."
             }
         )
 
-    key = f"{CONFIG.REST_PREFIX};{path};{args}"
+    key = f"{CONFIG.REST_PREFIX};{ttl_block_only(cache_seconds)};{path};{args}"
 
     v = REDIS_DB.get(key)
     if v:

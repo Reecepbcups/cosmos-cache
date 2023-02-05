@@ -5,6 +5,8 @@ from pycoingecko import CoinGeckoAPI
 
 import CONFIG
 from CONFIG import REDIS_DB
+from HELPERS import ttl_block_only
+from HELPERS_TYPES import Mode
 
 
 class Coingecko:
@@ -39,7 +41,9 @@ class Coingecko:
         ids = CONFIG.COINGECKO_IDS
         vs_currencies = CONFIG.COINGECKO_FIAT
 
-        key = f"coingecko;{ids};{vs_currencies}"
+        cache_seconds = int(CONFIG.COINGECKO_CACHE.get("seconds", 7))
+        key = f"coingecko;{ttl_block_only(cache_seconds)};{ids};{vs_currencies}"
+
         value = REDIS_DB.get(key)
         if value is not None:
             return json.loads(value)
@@ -57,9 +61,11 @@ class Coingecko:
             "coins": updated_coins,
             "last_update": int(time()),
         }
-        REDIS_DB.set(
-            key, json.dumps(data), ex=int(CONFIG.COINGECKO_CACHE.get("seconds", 7))
-        )
+
+        if cache_seconds == Mode.FOR_BLOCK_TIME.value:  # -2
+            cache_seconds = int(CONFIG.DEFAULT_CACHE_SECONDS)
+
+        REDIS_DB.set(key, json.dumps(data), ex=int(cache_seconds))
         return data
 
 
