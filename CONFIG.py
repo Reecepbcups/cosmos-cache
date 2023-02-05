@@ -6,6 +6,8 @@ from os import getenv
 import redis
 from dotenv import load_dotenv
 
+from HELPERS_TYPES import Mode
+
 HEADERS = {
     "accept": "application/json",
     "Content-Type": "application/json",
@@ -92,6 +94,7 @@ DEFAULT_CACHE_SECONDS: int = 6
 RPC_ENDPOINTS: dict = {}
 REST_ENDPOINTS: dict = {}
 COINGECKO_CACHE: dict = {}
+OTHER_CONFIGURATION: dict = {}
 
 # === CACHE HELPER ===
 def update_cache_times():
@@ -108,13 +111,22 @@ def update_cache_times():
     RPC_ENDPOINTS = cache_times.get("rpc", {})
     REST_ENDPOINTS = cache_times.get("rest", {})
     COINGECKO_CACHE = cache_times.get("coingecko", {})
+    OTHER_CONFIGURATION = cache_times.get("other", {})
 
 
 def get_cache_time_seconds(path: str, is_rpc: bool) -> int:
+    """
+    Returns an endpoints time to cache in seconds
+    """
     endpoints = RPC_ENDPOINTS if is_rpc else REST_ENDPOINTS
 
+    cache_seconds = DEFAULT_CACHE_SECONDS
     for k, seconds in endpoints.items():
         if re.match(k, path):
-            return seconds
+            cache_seconds = seconds
 
-    return DEFAULT_CACHE_SECONDS
+    if cache_seconds == Mode.FOR_BLOCK_TIME:
+        # if we clear every block time, we set = to 7 seconds since we will manually clear it via websocket subscription
+        cache_seconds = 7
+
+    return cache_seconds

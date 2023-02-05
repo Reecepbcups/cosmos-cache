@@ -8,10 +8,12 @@ from flask_cors import CORS, cross_origin
 import CONFIG as CONFIG
 from CONFIG import REDIS_DB
 from HELPERS import (
+    Mode,
     download_openapi_locally,
     get_stats_html,
     get_swagger_code_from_source,
     increment_call_value,
+    ttl_block_only,
 )
 from RequestsHandler import RestApiHandler
 
@@ -60,14 +62,14 @@ def get_rest(path):
     args = request.args
 
     cache_seconds = CONFIG.get_cache_time_seconds(path, is_rpc=False)
-    if cache_seconds < 0:
+    if cache_seconds == Mode.DISABLED:
         return jsonify(
             {
                 "error": f"cosmos endpoint cache: The path '{path}' is disabled on this node..."
             }
         )
 
-    key = f"{CONFIG.REST_PREFIX};{path};{args}"
+    key = f"{CONFIG.REST_PREFIX};{ttl_block_only(cache_seconds)};{path};{args}"
 
     v = REDIS_DB.get(key)
     if v:

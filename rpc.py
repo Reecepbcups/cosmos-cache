@@ -2,9 +2,10 @@
 
 # import asyncio
 import json
+import logging
 import re
+import threading
 
-# import websockets
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
 from flask_sock import Sock
@@ -12,11 +13,15 @@ from flask_sock import Sock
 import CONFIG as CONFIG
 from COINGECKO import Coingecko
 from CONFIG import REDIS_DB
-from HELPERS import hide_rpc_data, increment_call_value, replace_rpc_text
+from CONNECT_WEBSOCKET import TendermintRPCWebSocket
+from HELPERS import (
+    Mode,
+    hide_rpc_data,
+    increment_call_value,
+    replace_rpc_text,
+    ttl_block_only,
+)
 from RequestsHandler import RPCHandler
-
-# from flask_socketio import emit
-
 
 # === FLASK ===
 rpc_app = Flask(__name__)
@@ -36,6 +41,13 @@ def before_first_request():
     RPC_ROOT_HTML = replace_rpc_text()
     RPC_HANDLER = RPCHandler()
     GECKO = Coingecko()
+
+    #
+    # x = threading.Thread(target=TendermintRPCWebSocket().start)
+    # x.start()
+    #
+    tmrpc = TendermintRPCWebSocket(enableSignal=False, logLevel=logging.DEBUG)
+    threading.Thread(target=tmrpc.ws.run_forever).start()
 
 
 # === ROUTES ===
@@ -95,15 +107,15 @@ def get_rpc_endpoint(path: str):
 
     args = request.args
 
-    key = f"{CONFIG.RPC_PREFIX};{path};{args}"
-
     cache_seconds = CONFIG.get_cache_time_seconds(path, is_rpc=True)
-    if cache_seconds < 0:
+    if cache_seconds == Mode.DISABLED:
         return jsonify(
             {
                 "error": f"cosmos endpoint cache: The path '{path}' is disabled on this node..."
             }
         )
+
+    key = f"{CONFIG.RPC_PREFIX};{ttl_block_only(cache_seconds)};{path};{args}"
 
     v = REDIS_DB.get(key)
     if v:
@@ -128,15 +140,16 @@ def post_rpc_endpoint():
     # If its a single RPC request, the following is used.
     method = REQ_DATA.get("method", None)
     params = REQ_DATA.get("params", None)
-    key = f"{CONFIG.RPC_PREFIX};{method};{params}"
 
     cache_seconds = CONFIG.get_cache_time_seconds(method, is_rpc=True)
-    if cache_seconds < 0:
+    if cache_seconds == Mode.DISABLED:
         return jsonify(
             {
                 "error": f"cosmos endpoint cache: The RPC method '{method}' is disabled on this node..."
             }
         )
+
+    key = f"{CONFIG.RPC_PREFIX};{ttl_block_only(cache_seconds)};{method};{params}"
 
     v = REDIS_DB.get(key)
     if v:
@@ -179,4 +192,6 @@ def post_rpc_endpoint():
 
 if __name__ == "__main__":
     before_first_request()
-    rpc_app.run(debug=True, host="0.0.0.0", port=CONFIG.RPC_PORT)
+
+    # setting to True runs 2 processes
+    rpc_app.run(debug=False, host="0.0.0.0", port=CONFIG.RPC_PORT)
