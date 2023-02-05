@@ -66,8 +66,7 @@ RPC_PREFIX = getenv("REDIS_RPC_PREFIX", "junorpc")
 RPC_URL = getenv("RPC_URL", "https://juno-rpc.reece.sh:443")
 BACKUP_RPC_URL = getenv("BACKUP_RPC_URL", "https://rpc.juno.strange.love:443")
 
-# DISABLED CURRENTLY, Future TODO
-# RPC_WEBSOCKET = f'ws://{getenv("WEBSOCKET_ADDR", "15.204.143.232:26657")}/websocket'
+RPC_WEBSOCKET = getenv("WEBSOCKET_ADDR", "ws://15.204.143.232:26657/websocket")
 
 # ============
 # === REST ===
