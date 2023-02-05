@@ -89,12 +89,12 @@ NODE_MONIKER = getenv("NODE_MONIKER", "")
 NODE_TM_VERSION = getenv("NODE_TM_VERSION", "")
 
 # === Cache Times ===
-cache_times: dict = {}
 DEFAULT_CACHE_SECONDS: int = 6
+
+cache_times: dict = {}
 RPC_ENDPOINTS: dict = {}
 REST_ENDPOINTS: dict = {}
 COINGECKO_CACHE: dict = {}
-OTHER_CONFIGURATION: dict = {}
 
 # === CACHE HELPER ===
 def update_cache_times():
@@ -111,7 +111,6 @@ def update_cache_times():
     RPC_ENDPOINTS = cache_times.get("rpc", {})
     REST_ENDPOINTS = cache_times.get("rest", {})
     COINGECKO_CACHE = cache_times.get("coingecko", {})
-    OTHER_CONFIGURATION = cache_times.get("other", {})
 
 
 def get_cache_time_seconds(path: str, is_rpc: bool) -> int:
