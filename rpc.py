@@ -193,4 +193,4 @@ if __name__ == "__main__":
     before_first_request()
 
     # setting to True runs 2 processes
-    rpc_app.run(debug=False, host="0.0.0.0", port=CONFIG.RPC_PORT)
+    rpc_app.run(debug=True, host="0.0.0.0", port=CONFIG.RPC_PORT)

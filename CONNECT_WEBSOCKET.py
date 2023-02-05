@@ -1,4 +1,5 @@
 import json
+import logging
 
 import rel
 import websocket
@@ -6,9 +7,6 @@ import websocket
 from CONFIG import REDIS_DB, RPC_WEBSOCKET
 
 SUBSCRIBE_MSG = '{"jsonrpc": "2.0", "method": "subscribe", "params": ["tm.event=\'NewBlock\'"], "id": 1}'
-
-# logger
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -97,20 +95,5 @@ class TendermintRPCWebSocket:
 
 
 if __name__ == "__main__":
-    # websocket.enableTrace(False)  # toggle to show or hide output
-    # ws = websocket.WebSocketApp(
-    #     f"{RPC_WEBSOCKET}",
-    #     on_open=on_open,
-    #     on_message=on_message,
-    #     on_error=on_error,
-    #     on_close=on_close,
-    # )
-
-    # ws.run_forever(
-    #     dispatcher=rel, reconnect=5
-    # )  # Set dispatcher to automatic reconnection, 5 second reconnect delay if connection closed unexpectedly
-    # rel.signal(2, rel.abort)  # Keyboard Interrupt
-    # rel.dispatch()
-
     tmrpc = TendermintRPCWebSocket(enableSignal=True)  # so we can ctrl+c
     tmrpc.start()

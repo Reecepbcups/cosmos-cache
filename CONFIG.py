@@ -123,5 +123,6 @@ def get_cache_time_seconds(path: str, is_rpc: bool) -> int:
     for k, seconds in endpoints.items():
         if re.match(k, path):
             cache_seconds = seconds
+            break
 
     return cache_seconds

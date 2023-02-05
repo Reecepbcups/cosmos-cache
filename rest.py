@@ -35,7 +35,6 @@ def before_first_request():
     download_openapi_locally()
     REST_HANDLER = RestApiHandler()
 
-    # future: # future: https://stackoverflow.com/questions/24101724/gunicorn-with-multiple-workers-is-there-an-easy-way-to-execute-certain-code-onl
     tmrpc = TendermintRPCWebSocket(enableSignal=False, logLevel=logging.DEBUG)
     t = threading.Thread(target=tmrpc.ws.run_forever)
     t.daemon = True

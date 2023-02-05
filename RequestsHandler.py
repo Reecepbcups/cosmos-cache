@@ -14,19 +14,15 @@ def set_cache_for_time_if_valid(
     status_code: int, call_key: str, cache_seconds: int, redis_key: str, res: dict
 ):
 
-    print(status_code, call_key, cache_seconds, redis_key, res)
-
     if status_code == 200:
         increment_call_value(call_key)
 
         if cache_seconds == Mode.FOR_BLOCK_TIME.value:  # -2
-            cache_seconds = 7  # avg block time
+            cache_seconds = 6  # avg block time. So if the websocket stops for some reason, still 6sec TTL
 
         if cache_seconds > 0:
             # is a cache
             REDIS_DB.setex(redis_key, cache_seconds, json.dumps(res))
-
-    print(status_code, call_key, cache_seconds, redis_key, res)
 
 
 class RestApiHandler:
