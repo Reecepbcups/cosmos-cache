@@ -10,7 +10,11 @@ from HELPERS_TYPES import Mode
 
 def ttl_block_only(cache_seconds: int = 0):
     # this way on a new block, we delete all *;IsBlockOnly;* keys
-    return "IsBlockOnly" if cache_seconds == Mode.FOR_BLOCK_TIME.value else ""
+    return (
+        "IsBlockOnly"
+        if cache_seconds == Mode.FOR_BLOCK_TIME.value
+        else f"{cache_seconds}s"
+    )
 
 
 total_calls = {
