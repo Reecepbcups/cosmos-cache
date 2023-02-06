@@ -11,7 +11,13 @@ timeout = httpx.Timeout(5.0, connect=5.0, read=4.0)
 
 
 def set_cache_for_time_if_valid(
-    status_code: int, call_key: str, cache_seconds: int, redis_key: str, res: dict
+    status_code: int,
+    call_key: str,
+    cache_seconds: int,
+    redis_key: str,
+    res: dict,
+    use_hset: bool = False,
+    second_key: str = "",
 ):
 
     if status_code == 200:
@@ -21,8 +27,12 @@ def set_cache_for_time_if_valid(
             cache_seconds = 6  # avg block time. So if the websocket stops for some reason, still 6sec TTL
 
         if cache_seconds > 0:
-            # is a cache
-            REDIS_DB.setex(redis_key, cache_seconds, json.dumps(res))
+            if use_hset:
+                # expires the entire hset at some period of time
+                REDIS_DB.hset(redis_key, second_key, json.dumps(res))
+                REDIS_DB.expire(redis_key, cache_seconds)
+            else:
+                REDIS_DB.setex(redis_key, cache_seconds, json.dumps(res))
 
 
 class RestApiHandler:
@@ -78,7 +88,9 @@ class RPCHandler:
 
         return req.json()
 
-    def handle_single_rpc_post_request(self, data, key, method, cache_seconds) -> dict:
+    def handle_single_rpc_post_request(
+        self, data, key, method, cache_seconds, use_hset: bool = False
+    ) -> dict:
         # TODO: add round robin query here for multiple RPC nodes. If a node errors, save to cache for X period to not use (unless its the only 1)
         try:
             req = httpx.post(f"{CONFIG.RPC_URL}", data=data, timeout=timeout)
@@ -89,13 +101,19 @@ class RPCHandler:
         res = hide_rpc_data(req.json(), method)
 
         set_cache_for_time_if_valid(
-            req.status_code, "total_outbound;post_endpoint", cache_seconds, key, res
+            req.status_code,
+            "total_outbound;post_endpoint",
+            cache_seconds,
+            key,
+            res,
+            use_hset,
+            second_key=str(data),
         )
 
         return res
 
     def handle_single_rpc_get_requests(
-        self, path, key, cache_seconds: int, param_args
+        self, path, key, param_args, cache_seconds: int, use_hset: bool = False
     ) -> dict:
         try:
             req = httpx.get(
@@ -109,7 +127,13 @@ class RPCHandler:
         res = hide_rpc_data(req.json(), path)
 
         set_cache_for_time_if_valid(
-            req.status_code, "total_outbound;get_rpc_endpoint", cache_seconds, key, res
+            req.status_code,
+            "total_outbound;get_rpc_endpoint",
+            cache_seconds,
+            key,
+            res,
+            use_hset,
+            second_key=str(param_args),
         )
 
         return res
