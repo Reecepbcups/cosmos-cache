@@ -99,6 +99,12 @@ def coingecko():
         return jsonify({"error": "prices are not enabled on this node..."})
 
 
+def use_redis_hashset(path):
+    if any(path.startswith(x) for x in ["block", "tx"]):
+        return True
+    return False
+
+
 @rpc_app.route("/<path:path>", methods=["GET"])
 @cross_origin()
 def get_rpc_endpoint(path: str):
@@ -114,14 +120,21 @@ def get_rpc_endpoint(path: str):
             }
         )
 
-    key = f"{CONFIG.RPC_PREFIX};{ttl_block_only(cache_seconds)};{path};{args}"
+    use_hset = use_redis_hashset(path)
+    key = f"{CONFIG.RPC_PREFIX};{ttl_block_only(cache_seconds)};{path}"
+    if use_hset:
+        v = REDIS_DB.hget(key, str(args))
+    else:
+        key = f"{key};{args}"
+        v = REDIS_DB.get(key)
 
-    v = REDIS_DB.get(key)
     if v:
         increment_call_value("total_cache;get_rpc_endpoint")
         return jsonify(json.loads(v))
 
-    res = RPC_HANDLER.handle_single_rpc_get_requests(path, key, cache_seconds, args)
+    res = RPC_HANDLER.handle_single_rpc_get_requests(
+        path, key, args, cache_seconds, use_hset
+    )
 
     return jsonify(res)
 
@@ -148,15 +161,23 @@ def post_rpc_endpoint():
             }
         )
 
-    key = f"{CONFIG.RPC_PREFIX};{ttl_block_only(cache_seconds)};{method};{params}"
+    # key = f"{CONFIG.RPC_PREFIX};{ttl_block_only(cache_seconds)};{method};{params}"
+    # v = REDIS_DB.get(key)
 
-    v = REDIS_DB.get(key)
+    use_hset = use_redis_hashset(method)
+    key = f"{CONFIG.RPC_PREFIX};{ttl_block_only(cache_seconds)};{method}"
+    if use_hset:
+        v = REDIS_DB.hget(key, str(params))
+    else:
+        key = f"{key};{params}"
+        v = REDIS_DB.get(key)
+
     if v:
         increment_call_value("total_cache;post_endpoint")
         return jsonify(json.loads(v))
 
     res = RPC_HANDLER.handle_single_rpc_post_request(
-        json.dumps(REQ_DATA), key, method, cache_seconds
+        json.dumps(REQ_DATA), key, method, cache_seconds, use_hset
     )
     res = hide_rpc_data(res, method)
 
