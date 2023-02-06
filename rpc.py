@@ -7,14 +7,13 @@ import os
 import re
 import threading
 
-from flask import Flask, jsonify, request, send_from_directory
-from flask_cors import CORS, cross_origin
-from flask_sock import Sock
-
 import CONFIG as CONFIG
 from COINGECKO import Coingecko
 from CONFIG import REDIS_DB
 from CONNECT_WEBSOCKET import TendermintRPCWebSocket
+from flask import Flask, jsonify, request, send_from_directory
+from flask_cors import CORS, cross_origin
+from flask_sock import Sock
 from HELPERS import (
     Mode,
     hide_rpc_data,
@@ -22,6 +21,7 @@ from HELPERS import (
     replace_rpc_text,
     ttl_block_only,
 )
+from HELPERS_TYPES import CallType
 from RequestsHandler import RPCHandler
 
 # === FLASK ===
@@ -142,7 +142,7 @@ def get_rpc_endpoint(path: str):
         v = REDIS_DB.get(key)
 
     if v:
-        increment_call_value("total_cache;get_rpc_endpoint")
+        increment_call_value(CallType.RPC_GET_CACHE.value)
         return jsonify(json.loads(v))
 
     res = RPC_HANDLER.handle_single_rpc_get_requests(
@@ -159,7 +159,7 @@ def post_rpc_endpoint():
 
     # BatchHTTPClient's send in a list of JSONRPCRequests
     if isinstance(REQ_DATA, list):
-        increment_call_value("total_outbound;post_endpoint", amount=len(REQ_DATA))
+        increment_call_value(CallType.RPC_POST_OUTBOUND.value, len(REQ_DATA))
         return jsonify(RPC_HANDLER.handle_batch_http_request(REQ_DATA))
 
     # If its a single RPC request, the following is used.
@@ -186,7 +186,7 @@ def post_rpc_endpoint():
         v = REDIS_DB.get(key)
 
     if v:
-        increment_call_value("total_cache;post_endpoint")
+        increment_call_value(CallType.RPC_POST_CACHE.value)
         return jsonify(json.loads(v))
 
     res = RPC_HANDLER.handle_single_rpc_post_request(

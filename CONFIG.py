@@ -6,8 +6,6 @@ from os import getenv
 import redis
 from dotenv import load_dotenv
 
-from HELPERS_TYPES import Mode
-
 HEADERS = {
     "accept": "application/json",
     "Content-Type": "application/json",

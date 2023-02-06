@@ -1,15 +1,11 @@
 # Reece Williams | https://reece.sh | Jan 2023
 
 import json
-import logging
-import threading
-
-from flask import Flask, jsonify, request
-from flask_cors import CORS, cross_origin
 
 import CONFIG as CONFIG
 from CONFIG import REDIS_DB
-from CONNECT_WEBSOCKET import TendermintRPCWebSocket
+from flask import Flask, jsonify, request
+from flask_cors import CORS, cross_origin
 from HELPERS import (
     Mode,
     download_openapi_locally,
@@ -18,6 +14,7 @@ from HELPERS import (
     increment_call_value,
     ttl_block_only,
 )
+from HELPERS_TYPES import CallType
 from RequestsHandler import RestApiHandler
 
 app = Flask(__name__)
@@ -35,11 +32,12 @@ def before_first_request():
     download_openapi_locally()
     REST_HANDLER = RestApiHandler()
 
-    if len(CONFIG.RPC_WEBSOCKET) > 0:
-        tmrpc = TendermintRPCWebSocket(enableSignal=False, logLevel=logging.DEBUG)
-        t = threading.Thread(target=tmrpc.ws.run_forever)
-        t.daemon = True
-        t.start()
+    # not used yet here
+    # if len(CONFIG.RPC_WEBSOCKET) > 0:
+    #     tmrpc = TendermintRPCWebSocket(enableSignal=False, logLevel=logging.DEBUG)
+    #     t = threading.Thread(target=tmrpc.ws.run_forever)
+    #     t.daemon = True
+    #     t.start()
 
 
 @app.route("/", methods=["GET"])
@@ -81,7 +79,7 @@ def get_rest(path):
 
     v = REDIS_DB.get(key)
     if v:
-        increment_call_value("total_cache;get_all_rest")
+        increment_call_value(CallType.REST_GET_CACHE.value)
         return jsonify(json.loads(v))
 
     return jsonify(

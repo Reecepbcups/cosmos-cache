@@ -1,11 +1,10 @@
 import re
 from os import getenv
 
-import httpx
-
 import CONFIG
+import httpx
 from CONFIG import REDIS_DB
-from HELPERS_TYPES import Mode
+from HELPERS_TYPES import CallType, Mode
 
 
 def ttl_block_only(cache_seconds: int = 0):
@@ -19,14 +18,14 @@ def ttl_block_only(cache_seconds: int = 0):
 
 total_calls = {
     # RPC:
-    "total_cache;get_rpc_endpoint": 0,
-    "total_outbound;get_rpc_endpoint": 0,
-    # RPC Cache:
-    "total_cache;post_endpoint": 0,
-    "total_outbound;post_endpoint": 0,
+    CallType.RPC_GET_CACHE.value: 0,
+    CallType.RPC_GET_OUTBOUND.value: 0,
+    # RPC Post:
+    CallType.RPC_POST_CACHE.value: 0,
+    CallType.RPC_POST_OUTBOUND.value: 0,
     # REST:
-    "total_cache;get_all_rest": 0,
-    "total_outbound;get_all_rest": 0,
+    CallType.REST_GET_CACHE.value: 0,
+    CallType.REST_GET_OUTBOUND.value: 0,
 }
 
 
@@ -40,7 +39,7 @@ def increment_call_value(key, amount: int = 1):
         total_calls[key] = 0
 
     if total_calls[key] >= CONFIG.INC_EVERY:
-        REDIS_DB.incr(f"{CONFIG.RPC_PREFIX};{key}", amount=total_calls[key])
+        REDIS_DB.incr(f"{key}", amount=total_calls[key])
         total_calls[key] = 0
     else:
         total_calls[key] += amount
@@ -115,40 +114,47 @@ CLOSING_HTML = """</body></html>"""
 
 def get_stats_html():
     # gets information about the redis
-    rest_cache = REDIS_DB.get(f"{CONFIG.REST_PREFIX};total_cache;get_all_rest")
-    rest_outbound = REDIS_DB.get(f"{CONFIG.REST_PREFIX};total_outbound;get_all_rest")
-    rpc_cache = REDIS_DB.get(f"{CONFIG.RPC_PREFIX};total_cache;get_rpc_endpoint")
-    rpc_outbound = REDIS_DB.get(f"{CONFIG.RPC_PREFIX};total_outbound;get_rpc_endpoint")
+    rpc_get_cache = REDIS_DB.get(CallType.RPC_GET_CACHE.value)
+    rpc_get_outbound = REDIS_DB.get(CallType.RPC_GET_OUTBOUND.value)
 
-    if any(
-        [
-            type(rest_cache) != bytes,
-            type(rest_outbound) != bytes,
-            type(rpc_cache) != bytes,
-            type(rpc_outbound) != bytes,
-        ]
-    ):
-        return f"""
-        {INITIAL_HTML}
-            <p>Not enough httpx yet, check back later...</p>
-        {CLOSING_HTML}
-        """
+    rpc_post_cache = REDIS_DB.get(CallType.RPC_POST_CACHE.value)
+    rpc_post_outbound = REDIS_DB.get(CallType.RPC_POST_OUTBOUND.value)
 
-    rest_cache = int(rest_cache.decode("utf-8"))
-    rest_outbound = int(rest_outbound.decode("utf-8"))
-    rpc_cache = int(rpc_cache.decode("utf-8"))
-    rpc_outbound = int(rpc_outbound.decode("utf-8"))
+    rest_cache = REDIS_DB.get(CallType.REST_GET_CACHE.value)
+    rest_outbound = REDIS_DB.get(CallType.REST_GET_OUTBOUND.value)
+    # no rest post yet, not added.
+
+    # converts (1 so no div / 0 errors)
+    rpc_get_cache = 1 if rpc_get_cache == None else int(rpc_get_cache.decode("utf-8"))
+    rpc_get_outbound = (
+        1 if rpc_get_outbound == None else int(rpc_get_outbound.decode("utf-8"))
+    )
+
+    rpc_post_cache = (
+        1 if rpc_post_cache == None else int(rpc_post_cache.decode("utf-8"))
+    )
+    rpc_post_outbound = (
+        1 if rpc_post_outbound == None else int(rpc_post_outbound.decode("utf-8"))
+    )
+
+    rest_cache = 1 if rest_cache == None else int(rest_cache.decode("utf-8"))
+    rest_outbound = 1 if rest_outbound == None else int(rest_outbound.decode("utf-8"))
 
     return f"""
     {INITIAL_HTML}
-        <h1>RPC Cache Stats</h1>
-        <p>RPC Cache Hits: {rpc_cache:,}</p>
-        <p>RPC outbound: {rpc_outbound:,}</p>
-        <p>Percent Cached: {round((rpc_cache / (rpc_cache + rpc_outbound)) * 100, 2)}%</p>
+        <h1>RPC GET Cache Stats</h1>
+        <p>RPC Cache Hits: {rpc_get_cache}</p>
+        <p>RPC outbound: {rpc_get_outbound}</p>
+        <p>Percent Cached: {round((rpc_get_cache / (rpc_get_cache + rpc_get_outbound)) * 100, 2)}%</p>
         <br>
-        <h1>REST Cache Stats</h1>
-        <p>REST Cache Hits: {rest_cache:,}</p>
-        <p>REST outbound: {rest_outbound:,}</p>
+        <h1>RPC POST Cache Stats</h1>
+        <p>RPC Cache Hits: {rpc_post_cache}</p>
+        <p>RPC outbound: {rpc_post_outbound}</p>
+        <p>Percent Cached: {round((rpc_post_cache / (rpc_post_cache + rpc_post_outbound)) * 100, 2)}%</p>
+        <br>
+        <h1>REST GET Cache Stats</h1>
+        <p>REST Cache Hits: {rest_cache}</p>
+        <p>REST outbound: {rest_outbound}</p>
         <p>Percent Cached: {round((rest_cache / (rest_cache + rest_outbound)) * 100, 2)}%</p>
     {CLOSING_HTML}
     """

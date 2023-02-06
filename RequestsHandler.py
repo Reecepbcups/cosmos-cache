@@ -1,11 +1,10 @@
 import json
 
-import httpx
-
 import CONFIG
+import httpx
 from CONFIG import REDIS_DB
 from HELPERS import hide_rest_data, hide_rpc_data, increment_call_value
-from HELPERS_TYPES import Mode
+from HELPERS_TYPES import CallType, Mode
 
 timeout = httpx.Timeout(5.0, connect=5.0, read=4.0)
 
@@ -50,7 +49,7 @@ class RestApiHandler:
         res = hide_rest_data(req.json(), path)
 
         set_cache_for_time_if_valid(
-            req.status_code, "total_outbound;get_all_rest", cache_seconds, key, res
+            req.status_code, CallType.REST_GET_OUTBOUND.value, cache_seconds, key, res
         )
 
         return res
@@ -86,9 +85,6 @@ class RPCHandler:
                 json=REQ_DATA,
             )
 
-        if req.status_code == 200:
-            increment_call_value("total_outbound;batch_http", len(REQ_DATA))
-
         return req.json()
 
     def handle_single_rpc_post_request(
@@ -105,7 +101,7 @@ class RPCHandler:
 
         set_cache_for_time_if_valid(
             req.status_code,
-            "total_outbound;post_endpoint",
+            CallType.RPC_POST_OUTBOUND.value,
             cache_seconds,
             key,
             res,
@@ -131,7 +127,7 @@ class RPCHandler:
 
         set_cache_for_time_if_valid(
             req.status_code,
-            "total_outbound;get_rpc_endpoint",
+            CallType.RPC_GET_OUTBOUND.value,
             cache_seconds,
             key,
             res,
