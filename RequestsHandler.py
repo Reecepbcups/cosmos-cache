@@ -24,7 +24,10 @@ def set_cache_for_time_if_valid(
         increment_call_value(call_key)
 
         if cache_seconds == Mode.FOR_BLOCK_TIME.value:  # -2
-            cache_seconds = 6  # avg block time. So if the websocket stops for some reason, still 6sec TTL
+            if CONFIG.DEFAULT_CACHE_SECONDS > 0:
+                cache_seconds = CONFIG.DEFAULT_CACHE_SECONDS
+            else:
+                cache_seconds = 6
 
         if cache_seconds > 0:
             if use_hset:

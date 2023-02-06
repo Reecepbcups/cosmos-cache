@@ -35,10 +35,11 @@ def before_first_request():
     download_openapi_locally()
     REST_HANDLER = RestApiHandler()
 
-    tmrpc = TendermintRPCWebSocket(enableSignal=False, logLevel=logging.DEBUG)
-    t = threading.Thread(target=tmrpc.ws.run_forever)
-    t.daemon = True
-    t.start()
+    if len(CONFIG.RPC_WEBSOCKET) > 0:
+        tmrpc = TendermintRPCWebSocket(enableSignal=False, logLevel=logging.DEBUG)
+        t = threading.Thread(target=tmrpc.ws.run_forever)
+        t.daemon = True
+        t.start()
 
 
 @app.route("/", methods=["GET"])

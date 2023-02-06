@@ -45,10 +45,12 @@ def before_first_request():
     GECKO = Coingecko()
 
     # future: https://stackoverflow.com/questions/24101724/gunicorn-with-multiple-workers-is-there-an-easy-way-to-execute-certain-code-onl
-    tmrpc = TendermintRPCWebSocket(enableSignal=False, logLevel=logging.DEBUG)
-    t = threading.Thread(target=tmrpc.ws.run_forever, kwargs={"reconnect": 5})
-    t.daemon = True
-    t.start()
+
+    if len(CONFIG.RPC_WEBSOCKET) > 0:
+        tmrpc = TendermintRPCWebSocket(enableSignal=False, logLevel=logging.DEBUG)
+        t = threading.Thread(target=tmrpc.ws.run_forever, kwargs={"reconnect": 5})
+        t.daemon = True
+        t.start()
 
 
 # === ROUTES ===
