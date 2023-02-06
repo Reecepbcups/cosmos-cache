@@ -25,6 +25,7 @@ from RequestsHandler import RPCHandler
 
 # === FLASK ===
 rpc_app = Flask(__name__)
+
 sock = Sock(rpc_app)
 cors = CORS(rpc_app, resources={r"/*": {"origins": "*"}})
 
@@ -103,6 +104,20 @@ def use_redis_hashset(path):
     if any(path.startswith(x) for x in ["block", "tx"]):
         return True
     return False
+
+
+import os
+
+from flask import send_from_directory
+
+
+@rpc_app.route("/favicon.ico")
+def favicon():
+    return send_from_directory(
+        os.path.join(rpc_app.root_path, "static"),
+        "favicon.png",
+        mimetype="image/vnd.microsoft.icon",
+    )
 
 
 @rpc_app.route("/<path:path>", methods=["GET"])

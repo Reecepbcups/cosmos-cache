@@ -6,6 +6,6 @@ openapi.yml
 
 - auto-downloaded on the start of this program
 
-rest-favicon.png
+favicon.png
 
 - the image to show in the top tab if using the swagger UI on port 1317 (default)

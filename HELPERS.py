@@ -59,7 +59,7 @@ def get_swagger_code_from_source():
 
     html = req.text.replace(
         "//unpkg.com/swagger-ui-dist@3.40.0/favicon-16x16.png",
-        "/static/rest-favicon.png",
+        "/static/favicon.png",
     )
     html = re.sub(r"<title>.*</title>", f"<title>{CONFIG.API_TITLE}</title>", html)
     return html
