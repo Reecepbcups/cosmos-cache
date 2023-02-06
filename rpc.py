@@ -3,10 +3,11 @@
 # import asyncio
 import json
 import logging
+import os
 import re
 import threading
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS, cross_origin
 from flask_sock import Sock
 
@@ -45,7 +46,7 @@ def before_first_request():
 
     # future: https://stackoverflow.com/questions/24101724/gunicorn-with-multiple-workers-is-there-an-easy-way-to-execute-certain-code-onl
     tmrpc = TendermintRPCWebSocket(enableSignal=False, logLevel=logging.DEBUG)
-    t = threading.Thread(target=tmrpc.ws.run_forever)
+    t = threading.Thread(target=tmrpc.ws.run_forever, kwargs={"reconnect": 5})
     t.daemon = True
     t.start()
 
@@ -104,11 +105,6 @@ def use_redis_hashset(path):
     if any(path.startswith(x) for x in ["block", "tx"]):
         return True
     return False
-
-
-import os
-
-from flask import send_from_directory
 
 
 @rpc_app.route("/favicon.ico")
