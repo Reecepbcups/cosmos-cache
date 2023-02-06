@@ -113,6 +113,9 @@ CLOSING_HTML = """</body></html>"""
 
 
 def get_stats_html():
+
+    updates_every = CONFIG.INC_EVERY
+
     # gets information about the redis
     rpc_get_cache = REDIS_DB.get(CallType.RPC_GET_CACHE.value)
     rpc_get_outbound = REDIS_DB.get(CallType.RPC_GET_OUTBOUND.value)
@@ -142,6 +145,8 @@ def get_stats_html():
 
     return f"""
     {INITIAL_HTML}
+        <h2>Updates every {updates_every} calls</h2>
+
         <h1>RPC GET Cache Stats</h1>
         <p>RPC Cache Hits: {rpc_get_cache}</p>
         <p>RPC outbound: {rpc_get_outbound}</p>
