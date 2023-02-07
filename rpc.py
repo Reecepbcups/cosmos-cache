@@ -174,9 +174,6 @@ def post_rpc_endpoint():
             }
         )
 
-    # key = f"{CONFIG.RPC_PREFIX};{ttl_block_only(cache_seconds)};{method};{params}"
-    # v = REDIS_DB.get(key)
-
     use_hset = use_redis_hashset(method)
     key = f"{CONFIG.RPC_PREFIX};{ttl_block_only(cache_seconds)};{method}"
     if use_hset:
@@ -185,8 +182,13 @@ def post_rpc_endpoint():
         key = f"{key};{params}"
         v = REDIS_DB.get(key)
 
-    if v:
-        increment_call_value(CallType.RPC_POST_CACHE.value)
+    # ignore abci_query so that way we can get Tx data on post
+    if (
+        v
+        and method != "abci_query"
+        and params.get("path", "") != "/cosmos.auth.v1beta1.Query/Account"
+    ):
+        increment_call_value("total_cache;post_endpoint")
         return jsonify(json.loads(v))
 
     res = RPC_HANDLER.handle_single_rpc_post_request(
