@@ -7,13 +7,14 @@ import os
 import re
 import threading
 
+from flask import Flask, jsonify, request, send_from_directory
+from flask_cors import CORS, cross_origin
+from flask_sock import Sock
+
 import CONFIG as CONFIG
 from COINGECKO import Coingecko
 from CONFIG import REDIS_DB
 from CONNECT_WEBSOCKET import TendermintRPCWebSocket
-from flask import Flask, jsonify, request, send_from_directory
-from flask_cors import CORS, cross_origin
-from flask_sock import Sock
 from HELPERS import (
     Mode,
     hide_rpc_data,
@@ -183,11 +184,7 @@ def post_rpc_endpoint():
         v = REDIS_DB.get(key)
 
     # ignore abci_query so that way we can get Tx data on post
-    if (
-        v
-        and method != "abci_query"
-        and params.get("path", "") != "/cosmos.auth.v1beta1.Query/Account"
-    ):
+    if v and method != "abci_query":
         increment_call_value("total_cache;post_endpoint")
         return jsonify(json.loads(v))
 
