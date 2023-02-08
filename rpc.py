@@ -105,7 +105,17 @@ def coingecko():
 
 
 def use_redis_hashset(path):
-    if any(path.startswith(x) for x in ["block", "tx"]):
+    if any(
+        path.startswith(x)
+        for x in [
+            "block?height=",
+            "block_by_hash",
+            "block_results",
+            "block_search",
+            "blockchain",
+            "tx_search",
+        ]
+    ):
         return True
     return False
 
