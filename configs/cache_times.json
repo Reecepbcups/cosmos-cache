@@ -12,11 +12,14 @@
 
         "genesis.*": 259200,
 
-        "block.*": 3600,
-        "tx.*": 3600
+        "block": -2,
+        "block?height=": 3600,
+        "tx.*": 3600  
     },
     "rest": {        
         "cosmos\/auth\/v1beta1\/accounts": -1,
+
+        ".*\/blocks/latest": -2,
 
         ".*\/params": 3600,
         ".*delegations": 300,
