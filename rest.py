@@ -2,10 +2,11 @@
 
 import json
 
-import CONFIG as CONFIG
-from CONFIG import REDIS_DB
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
+
+import CONFIG as CONFIG
+from CONFIG import REDIS_DB
 from HELPERS import (
     Mode,
     download_openapi_locally,

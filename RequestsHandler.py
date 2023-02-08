@@ -1,12 +1,13 @@
 import json
 
-import CONFIG
 import httpx
+
+import CONFIG
 from CONFIG import REDIS_DB
 from HELPERS import hide_rest_data, hide_rpc_data, increment_call_value
 from HELPERS_TYPES import CallType, Mode
 
-timeout = httpx.Timeout(5.0, connect=5.0, read=4.0)
+timeout = httpx.Timeout(30.0, connect=5.0, read=4.0)
 
 
 def set_cache_for_time_if_valid(
