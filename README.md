@@ -1,4 +1,6 @@
-# Cosmos Endpoint Cache
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/31943163/217985088-cfcf62b3-808f-4ae3-a7f3-8c8486d941c9.png" />
+</p>
 
 Optimize Cosmos query calls by caching responses with a local or remote database.
 
