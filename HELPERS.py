@@ -1,8 +1,9 @@
 import re
 from os import getenv
 
-import CONFIG
 import httpx
+
+import CONFIG
 from CONFIG import REDIS_DB
 from HELPERS_TYPES import CallType, Mode
 
@@ -29,14 +30,14 @@ total_calls = {
 }
 
 
-def increment_call_value(key, amount: int = 1):
+def increment_call_value(key: str, amount: int = 1):
     global total_calls
 
     if CONFIG.ENABLE_COUNTER == False:
         return
 
     if key not in total_calls:
-        total_calls[key] = 0
+        total_calls[str(key)] = 0
 
     if total_calls[key] >= CONFIG.INC_EVERY:
         REDIS_DB.incr(f"{key}", amount=total_calls[key])

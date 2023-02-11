@@ -19,11 +19,15 @@ def set_cache_for_time_if_valid(
     use_hset: bool = False,
     second_key: str = "",
 ):
-
     increment_call_value(call_key)
 
+    if cache_seconds == Mode.NO_CACHE.value:
+        # useful for broadcasted txs
+        return
+
     if status_code == 200:
-        if cache_seconds == Mode.FOR_BLOCK_TIME.value:  # -2
+        # -2 = clear when a new block is minted
+        if cache_seconds == Mode.FOR_BLOCK_TIME.value:
             if CONFIG.DEFAULT_CACHE_SECONDS > 0:
                 cache_seconds = CONFIG.DEFAULT_CACHE_SECONDS
             else:

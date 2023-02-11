@@ -187,15 +187,27 @@ def post_rpc_endpoint():
     use_hset = use_redis_hashset(method)
     key = f"{CONFIG.RPC_PREFIX};{ttl_block_only(cache_seconds)};{method}"
     # We save/get requests data since it also has the id of said requests from json RPC.
+
+    modified_data = dict(REQ_DATA)
+    original_req_id = int(dict(REQ_DATA).get("id", 0))
+
+    # we set the save key as -1 id since that is not real. This way on requests we are forced to change it back to the original requests
+    # this ensures we cache things such as status independent of the requested id.
+    modified_data["id"] = -1
+
     if use_hset:
-        v = REDIS_DB.hget(key, str(REQ_DATA))
+        v = REDIS_DB.hget(key, str(modified_data))
     else:
-        key = f"{key};{REQ_DATA}"
+        key = f"{key};{modified_data}"
         v = REDIS_DB.get(key)
 
     if v:
         increment_call_value(CallType.RPC_POST_CACHE.value)
-        return jsonify(json.loads(v))
+        # replace the id with the original id so the requests is valid and in the order requested.
+        # else we get: Error: wrong ID: response ID (0) does not match request ID (1)
+        v = json.loads(v)
+        v["id"] = original_req_id
+        return jsonify(v)
 
     res = RPC_HANDLER.handle_single_rpc_post_request(
         json.dumps(REQ_DATA), key, method, cache_seconds, use_hset
