@@ -20,9 +20,9 @@ def set_cache_for_time_if_valid(
     second_key: str = "",
 ):
 
-    if status_code == 200:
-        increment_call_value(call_key)
+    increment_call_value(call_key)
 
+    if status_code == 200:
         if cache_seconds == Mode.FOR_BLOCK_TIME.value:  # -2
             if CONFIG.DEFAULT_CACHE_SECONDS > 0:
                 cache_seconds = CONFIG.DEFAULT_CACHE_SECONDS
