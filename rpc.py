@@ -175,7 +175,6 @@ def post_rpc_endpoint():
 
     # If its a single RPC request, the following is used.
     method = REQ_DATA.get("method", None)
-    params = REQ_DATA.get("params", None)
 
     cache_seconds = CONFIG.get_cache_time_seconds(method, is_rpc=True)
     if cache_seconds == Mode.DISABLED.value:
@@ -187,15 +186,15 @@ def post_rpc_endpoint():
 
     use_hset = use_redis_hashset(method)
     key = f"{CONFIG.RPC_PREFIX};{ttl_block_only(cache_seconds)};{method}"
+    # We save/get requests data since it also has the id of said requests from json RPC.
     if use_hset:
-        v = REDIS_DB.hget(key, str(params))
+        v = REDIS_DB.hget(key, str(REQ_DATA))
     else:
-        key = f"{key};{params}"
+        key = f"{key};{REQ_DATA}"
         v = REDIS_DB.get(key)
 
-    # ignore abci_query so that way we can get Tx data on post
-    if v and method != "abci_query":
-        increment_call_value("total_cache;post_endpoint")
+    if v:
+        increment_call_value(CallType.RPC_POST_CACHE.value)
         return jsonify(json.loads(v))
 
     res = RPC_HANDLER.handle_single_rpc_post_request(
