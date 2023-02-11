@@ -7,6 +7,9 @@
         "health.*": -2,
         "abci_info.*": -2,
         "status.*": -2,
+        
+        "broadcast_tx_commit.*": 0,
+        "broadcast_tx_sync.*": 0,
                 
         "unconfirmed_txs": 3,
 
