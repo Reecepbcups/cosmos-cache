@@ -44,17 +44,27 @@ def set_cache_for_time_if_valid(
 
 class RestApiHandler:
     def handle_single_rest_get_requests(
-        self, path, key, cache_seconds: int, param_args
+        self, path, key, cache_seconds: int, param_args, headers: dict
     ) -> dict:
         try:
-            req = httpx.get(f"{CONFIG.REST_URL}/{path}", params=param_args)
+            req = httpx.get(
+                f"{CONFIG.REST_URL}/{path}", params=param_args, headers=headers
+            )
         except:
-            req = httpx.get(f"{CONFIG.BACKUP_REST_URL}/{path}", params=param_args)
+            req = httpx.get(
+                f"{CONFIG.BACKUP_REST_URL}/{path}", params=param_args, headers=headers
+            )
 
         res = hide_rest_data(req.json(), path)
 
         set_cache_for_time_if_valid(
-            req.status_code, CallType.REST_GET_OUTBOUND.value, cache_seconds, key, res
+            req.status_code,
+            CallType.REST_GET_OUTBOUND.value,
+            cache_seconds,
+            key,
+            res,
+            use_hset=True,
+            second_key=str(headers),
         )
 
         return res
