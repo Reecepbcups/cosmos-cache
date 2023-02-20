@@ -55,13 +55,7 @@ def get_config_file(filename: str):
 # === REDIS ===
 # =============
 REDIS_URL = getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
-
-if "://" in REDIS_URL:
-    REDIS_DB = redis.Redis.from_url(REDIS_URL)
-else:
-    # url, port = REDIS_URL.split(":")
-    url = REDIS_URL.split(":")[0]
-    REDIS_DB = redis.Redis(host=f"{url}", db=0)
+REDIS_DB = redis.Redis.from_url(REDIS_URL)
 
 
 redis_config = get_config_file("redis.json")

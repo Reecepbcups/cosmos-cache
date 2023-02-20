@@ -11,16 +11,16 @@ services:
     expose:
       - port: 6379        
         to:
-          - global: true       
+          - global: true
 
   rpc-cache:
-    image: reecepbcups/api-cache:0.0.1
+    image: reecepbcups/rpc-cache:0.0.4
     depends_on:
       - redis
     env:
       # NOTE - most up to date will be in the docker-compose.yml file
       - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json
-      - REDIS_URL=redis://redis
+      - REDIS_URL=redis://akash.provider.domain.here:30830/0
       - REDIS_RPC_PREFIX=unirpc
       - ENABLE_COUNTER=false
       - RPC_URL=http://5.161.80.115:26657
@@ -40,9 +40,9 @@ services:
       - port: 5001
         to:
           - global: true       
-      - port: 8080
+      - port: 80
         to:
-          - global: true       
+          - global: true
 
 profiles:
   compute:
