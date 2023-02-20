@@ -3,9 +3,6 @@
 
 FROM python:3.6-slim
 
-COPY . /srv/flask_app
-WORKDIR /srv/flask_app
-
 RUN apt-get clean \
     && apt-get -y update
 
@@ -13,7 +10,12 @@ RUN apt-get -y install nginx \
     && apt-get -y install python3-dev \
     && apt-get -y install build-essential
 
-RUN pip install -r requirements/requirements.txt --src /usr/local/src
+COPY requirements/requirements.txt /srv/flask_app/requirements/requirements.txt
+RUN pip install -r /srv/flask_app/requirements/requirements.txt --src /usr/local/src
+
+COPY . /srv/flask_app
+WORKDIR /srv/flask_app
 
 EXPOSE 5001
+# ["gunicorn", "-w","3", "-b", "0.0.0.0:5000", "app"]
 CMD ["gunicorn", "-b", "0.0.0.0:5001", "rpc:rpc_app"]

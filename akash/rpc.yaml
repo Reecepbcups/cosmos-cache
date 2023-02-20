@@ -1,0 +1,90 @@
+---
+version: "2.0"
+
+services:
+  redis:
+    image: redis:latest
+    env:
+      - REDIS_AOF_ENABLED=no
+      - ALLOW_EMPTY_PASSWORD=yes
+      # - REDIS_PASSWORD=rootpassword
+    expose:
+      - port: 6379        
+        to:
+          - global: true       
+
+  rpc-cache:
+    image: reecepbcups/api-cache:0.0.1
+    depends_on:
+      - redis
+    env:
+      # NOTE - most up to date will be in the docker-compose.yml file
+      - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json
+      - REDIS_URL=redis://redis
+      - REDIS_RPC_PREFIX=unirpc
+      - ENABLE_COUNTER=false
+      - RPC_URL=http://5.161.80.115:26657
+      - BACKUP_RPC_URL=http://5.161.80.115:26657
+      - RPC_WEBSOCKET=ws://5.161.80.115:26657/websocket
+      - RPC_LISTEN_ADDRESS=HIDDEN
+      - NODE_MONIKER="testing"
+      - NODE_TM_VERSION=HIDDEN
+      - COINGECKO_ENABLED=true
+      # - COINGECKO_API_KEY="HERE"
+      - COINGECKO_CACHE_SECONDS=6 # do not change if you do not have an API key.
+      - COINGECKO_IDS=cosmos,juno-network,osmosis,canto
+      - COINGECKO_FIAT=usd,eur,gbp
+      - RPC_TITLE=Docker RPC cache
+      - RPC_CUSTOM_TEXT=<a href="https://twitter.com/Reecepbcups_/status/1617396571188133888?s=20&t=OKi00IkStINFqYVweZXlaw">Custom caching solution active</a><br><a href="https://juno-api.reece.sh">My Juno REST API</a><br>
+    expose:
+      - port: 5001
+        to:
+          - global: true       
+      - port: 8080
+        to:
+          - global: true       
+
+profiles:
+  compute:
+    redis:
+      resources:
+        cpu:
+          units: 0.25
+        memory:
+          size: 1Gi
+        storage:
+          size: 1Gi
+    rpc-cache:
+      resources:
+        cpu:
+          units: 1.0
+        memory:
+          size: 1Gi
+        storage:
+          size: 1Gi
+  placement:
+    akash:
+      attributes:
+        host: akash
+      signedBy:
+        anyOf:
+          - "akash1365yvmc4s7awdyj3n2sav7xfx76adc6dnmlx63"
+          - "akash18qa2a2ltfyvkyj0ggj3hkvuj6twzyumuaru9s4"
+      pricing:
+        redis: 
+          denom: uakt
+          amount: 10000
+        rpc-cache: 
+          denom: uakt
+          amount: 10000
+
+
+deployment:
+  redis:
+    akash:
+      profile: redis
+      count: 1
+  rpc-cache:
+    akash:
+      profile: rpc-cache
+      count: 1

@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 # on a new block message, we will clear redis of any values which the config set to -2
 # Use this for an indexer in the future?? :D
 def on_message(ws, message):
-
     msg = json.loads(message)
 
     if msg.get("result") == {}:

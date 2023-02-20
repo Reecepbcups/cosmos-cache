@@ -4,6 +4,7 @@ import re
 from os import getenv
 
 import redis
+import requests
 from dotenv import load_dotenv
 
 HEADERS = {
@@ -14,18 +15,34 @@ HEADERS = {
 PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 env_file = os.path.join(PROJECT_DIR, ".env")
-if not os.path.exists(env_file):
-    # error
-    print("No .env file found. Please copy it and edit. `cp configs/.env .env`")
-    exit(1)
+
 
 load_dotenv(env_file)
 
 ## == Helper == ##
+REMOTE_CONFIG_TIME_FILE = getenv("REMOTE_CONFIG_TIME_FILE", "")
+if not os.path.exists(env_file):
+    if len(REMOTE_CONFIG_TIME_FILE) == 0:
+        # error as we are not using docker
+        print("No .env file found. Please copy it and edit. `cp configs/.env .env`")
+        exit(1)
+
+
 def get_config_file(filename: str):
     """
     Gets the custom config file if it exist. If not, uses the custom one if allowed.
+
+    If it is the cache time, we allow it to be downloaded from a remote source so that docker/akash is easier to use
     """
+    if filename == "cache_times.json" and len(REMOTE_CONFIG_TIME_FILE) > 0:
+        if os.path.exists(filename):
+            return os.path.join(PROJECT_DIR, filename)
+        else:
+            print("Downloading remote config file...")
+            r = requests.get(REMOTE_CONFIG_TIME_FILE).text
+            with open(os.path.join(PROJECT_DIR, filename), "w") as f:
+                f.write(r)
+
     # custom file if they moved to the project root dir
     custom_config = os.path.join(PROJECT_DIR, filename)
     if os.path.exists(custom_config):
@@ -38,10 +55,13 @@ def get_config_file(filename: str):
 # === REDIS ===
 # =============
 REDIS_URL = getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
-if REDIS_URL.startswith("redis://"):
+
+if "://" in REDIS_URL:
     REDIS_DB = redis.Redis.from_url(REDIS_URL)
 else:
-    REDIS_DB = redis.Redis(host=REDIS_URL)
+    # url, port = REDIS_URL.split(":")
+    url = REDIS_URL.split(":")[0]
+    REDIS_DB = redis.Redis(host=f"{url}", db=0)
 
 
 redis_config = get_config_file("redis.json")

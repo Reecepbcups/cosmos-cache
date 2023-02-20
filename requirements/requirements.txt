@@ -17,6 +17,7 @@ flask-cors
 uwsgi
 gunicorn
 
+# May not need anymore
 Werkzeug==0.14.1
 uWSGI==2.0.17.1
 

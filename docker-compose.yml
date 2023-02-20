@@ -1,12 +1,23 @@
 version: "3.9"
-services:    
-  # redis:
-  #   image: "redis:latest"    
 
+services:    
+  # redis_db:
+  #   image: "redis:latest"   
+  #   restart: always
+  #   network_mode: "bridge"
+  #   ports:
+  #     - "6379:7000"
+
+  # way to change # of workers / threads?
   rpc:
-    image: "reecepbcups/rpc-cache:latest"
+    image: "reecepbcups/rpc-cache:0.0.3"
     network_mode: "host"
+    # depends_on:
+    #   - redis_db
     environment:
+      - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json
+      # - REDIS_URL=redis://127.0.0.1:6379
+      # - REDIS_URL=redis://127.0.0.1:6379/0
       - REDIS_URL=redis://127.0.0.1:6379
       - REDIS_RPC_PREFIX=unirpc
       - ENABLE_COUNTER=false
@@ -17,7 +28,7 @@ services:
       - NODE_MONIKER="testing"
       - NODE_TM_VERSION=HIDDEN
       - COINGECKO_ENABLED=true
-      - COINGECKO_API_KEY=""
+      # - COINGECKO_API_KEY="HERE"
       - COINGECKO_CACHE_SECONDS=6 # do not change if you do not have an API key.
       - COINGECKO_IDS=cosmos,juno-network,osmosis,canto
       - COINGECKO_FIAT=usd,eur,gbp
@@ -26,16 +37,20 @@ services:
     ports:
       - "5001:5001"
 
-  api:
-    image: "reecepbcups/api-cache:latest"
-    network_mode: "host"
-    environment:
-      - REDIS_URL=redis://127.0.0.1:6379
-      - REDIS_REST_PREFIX=unirest
-      - REST_URL=http://15.204.143.232:1317
-      - BACKUP_REST_URL=https://api.juno.strange.love
-      - ENABLE_COUNTER=false
-      - NODE_MONIKER="testing"
-      - API_TITLE=Docker REST      
-    ports:
-      - "5000:5000"
+  # api:
+  #   image: "reecepbcups/api-cache:0.0.3"
+  #   network_mode: "host"
+  #   depends_on:
+  #     - redis_db
+  #   environment:
+  #     - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json
+  #     - REDIS_URL=redis://redis_db
+  #     - REDIS_REST_PREFIX=unirest
+  #     - REST_URL=http://15.204.143.232:1317
+  #     - BACKUP_REST_URL=https://api.juno.strange.love
+  #     - ENABLE_COUNTER=false
+  #     - NODE_MONIKER="testing"
+  #     - API_TITLE=Docker REST
+  #     - DISABLE_SWAGGER_UI=false
+  #   ports:
+  #     - "5000:5000"
