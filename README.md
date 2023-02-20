@@ -39,7 +39,7 @@ This makes it possible to run on cloud providers like Akash, AWS, GCP, Azure, et
 
 ```sh
 # System
-sudo apt install redis-server
+sudo apt install redis-server python3-pip 
 
 sudo pacman -Sy redis-server
 

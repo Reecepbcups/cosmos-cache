@@ -1,8 +1,10 @@
+import json
 import re
 from os import getenv
 
-import CONFIG
 import httpx
+
+import CONFIG
 from CONFIG import REDIS_DB
 from HELPERS_TYPES import CallType, Mode
 
@@ -112,8 +114,19 @@ INITIAL_HTML = """<html><head><title>Cache Stats</title></head><body>"""
 CLOSING_HTML = """</body></html>"""
 
 
-def get_stats_html():
+def get_config_values():
+    KVs = [item for item in dir(CONFIG) if not item.startswith("__")]
+    items = {item: getattr(CONFIG, item) for item in KVs}
 
+    return f"""
+    {INITIAL_HTML}
+        <h2>Config Values</h2>        
+        <p>{items}</p>
+    {CLOSING_HTML}
+    """
+
+
+def get_stats_html():
     updates_every = CONFIG.INC_EVERY
 
     # gets information about the redis
