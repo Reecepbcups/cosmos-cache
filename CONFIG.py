@@ -85,6 +85,8 @@ BACKUP_REST_URL = getenv("BACKUP_REST_URL", f"https://api.juno.strange.love")
 
 OPEN_API = f"{REST_URL}/static/openapi.yml"
 
+DISABLE_SWAGGER_UI = getenv("DISABLE_SWAGGER_UI", "false").lower().startswith("t")
+
 # Security
 RPC_LISTEN_ADDRESS = getenv("RPC_LISTEN_ADDRESS", "")
 NODE_MONIKER = getenv("NODE_MONIKER", "")

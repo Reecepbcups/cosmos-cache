@@ -1,9 +1,8 @@
 import re
 from os import getenv
 
-import httpx
-
 import CONFIG
+import httpx
 from CONFIG import REDIS_DB
 from HELPERS_TYPES import CallType, Mode
 

@@ -2,11 +2,10 @@
 
 import json
 
-from flask import Flask, jsonify, request
-from flask_cors import CORS, cross_origin
-
 import CONFIG as CONFIG
 from CONFIG import REDIS_DB
+from flask import Flask, jsonify, request
+from flask_cors import CORS, cross_origin
 from HELPERS import (
     Mode,
     download_openapi_locally,
@@ -45,6 +44,9 @@ def before_first_request():
 @cross_origin()
 def root():
     global REST_SWAGGER_HTML
+
+    if CONFIG.DISABLE_SWAGGER_UI:
+        return jsonify({"code": 12, "message": "Not Implemented", "details": []})
 
     if len(REST_SWAGGER_HTML) > 0:
         return REST_SWAGGER_HTML
