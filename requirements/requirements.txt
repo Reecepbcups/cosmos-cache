@@ -17,4 +17,7 @@ flask-cors
 uwsgi
 gunicorn
 
+Werkzeug==0.14.1
+uWSGI==2.0.17.1
+
 pycoingecko

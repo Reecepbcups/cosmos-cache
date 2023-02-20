@@ -1,0 +1,41 @@
+version: "3.9"
+services:    
+  # redis:
+  #   image: "redis:latest"    
+
+  rpc:
+    image: "reecepbcups/rpc-cache:latest"
+    network_mode: "host"
+    environment:
+      - REDIS_URL=redis://127.0.0.1:6379
+      - REDIS_RPC_PREFIX=unirpc
+      - ENABLE_COUNTER=false
+      - RPC_URL=http://5.161.80.115:26657
+      - BACKUP_RPC_URL=http://5.161.80.115:26657
+      - RPC_WEBSOCKET=ws://5.161.80.115:26657/websocket
+      - RPC_LISTEN_ADDRESS=HIDDEN
+      - NODE_MONIKER="testing"
+      - NODE_TM_VERSION=HIDDEN
+      - COINGECKO_ENABLED=true
+      - COINGECKO_API_KEY=""
+      - COINGECKO_CACHE_SECONDS=6 # do not change if you do not have an API key.
+      - COINGECKO_IDS=cosmos,juno-network,osmosis,canto
+      - COINGECKO_FIAT=usd,eur,gbp
+      - RPC_TITLE=Docker RPC cache
+      - RPC_CUSTOM_TEXT=<a href="https://twitter.com/Reecepbcups_/status/1617396571188133888?s=20&t=OKi00IkStINFqYVweZXlaw">Custom caching solution active</a><br><a href="https://juno-api.reece.sh">My Juno REST API</a><br>
+    ports:
+      - "5001:5001"
+
+  api:
+    image: "reecepbcups/api-cache:latest"
+    network_mode: "host"
+    environment:
+      - REDIS_URL=redis://127.0.0.1:6379
+      - REDIS_REST_PREFIX=unirest
+      - REST_URL=http://15.204.143.232:1317
+      - BACKUP_REST_URL=https://api.juno.strange.love
+      - ENABLE_COUNTER=false
+      - NODE_MONIKER="testing"
+      - API_TITLE=Docker REST      
+    ports:
+      - "5000:5000"
