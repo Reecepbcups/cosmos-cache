@@ -14,7 +14,7 @@ services:
           - global: true
 
   rpc-cache:
-    image: reecepbcups/rpc-cache:0.0.4
+    image: reecepbcups/rpc-cache:0.0.6
     depends_on:
       - redis
     env:
@@ -23,6 +23,7 @@ services:
       - REDIS_URL=redis://akash.provider.domain.here:30830/0
       - REDIS_RPC_PREFIX=unirpc
       - ENABLE_COUNTER=false
+      - USE_BACKUP_AS_PRIMARY=false
       - RPC_URL=http://5.161.80.115:26657
       - BACKUP_RPC_URL=https://juno-testnet-rpc.polkachu.com
       - RPC_WEBSOCKET=ws://5.161.80.115:26657/websocket
@@ -45,7 +46,7 @@ services:
           - global: true
 
   api-cache:
-    image: reecepbcups/api-cache:0.0.4
+    image: reecepbcups/api-cache:0.0.6
     depends_on:
       - redis
     env:
@@ -53,6 +54,7 @@ services:
       - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json
       - REDIS_URL=redis://akash.provider.domain.here:30830/0
       - REDIS_REST_PREFIX=unirest
+      - USE_BACKUP_AS_PRIMARY=false
       - REST_URL=http://15.204.143.232:1317
       - BACKUP_REST_URL=https://juno-testnet-api.polkachu.com
       - ENABLE_COUNTER=false
