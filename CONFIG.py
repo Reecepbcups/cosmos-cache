@@ -55,6 +55,14 @@ def get_config_file(filename: str):
 # === REDIS ===
 # =============
 REDIS_URL = getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
+
+if "http://" in REDIS_URL or "https://" in REDIS_URL:
+    # remove that http from the url
+    REDIS_URL = REDIS_URL.replace("http://", "").replace("https://", "")
+    print(
+        "WARNING: Found http(s):// in your URL. It has been removed but you should ensure this is correct."
+    )
+
 REDIS_DB = redis.Redis.from_url(REDIS_URL)
 
 

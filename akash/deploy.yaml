@@ -1,7 +1,7 @@
 ---
 version: "2.0"
 
-services:
+services:  
   redis:
     image: redis:latest
     env:
@@ -24,13 +24,13 @@ services:
       - REDIS_RPC_PREFIX=unirpc
       - ENABLE_COUNTER=false
       - RPC_URL=http://5.161.80.115:26657
-      - BACKUP_RPC_URL=http://5.161.80.115:26657
+      - BACKUP_RPC_URL=https://juno-testnet-rpc.polkachu.com
       - RPC_WEBSOCKET=ws://5.161.80.115:26657/websocket
       - RPC_LISTEN_ADDRESS=HIDDEN
-      - NODE_MONIKER="testing"
+      - NODE_MONIKER=reecepbcups
       - NODE_TM_VERSION=HIDDEN
       - COINGECKO_ENABLED=true
-      # - COINGECKO_API_KEY="HERE"
+      # - COINGECKO_API_KEY=HERE
       - COINGECKO_CACHE_SECONDS=6 # do not change if you do not have an API key.
       - COINGECKO_IDS=cosmos,juno-network,osmosis,canto
       - COINGECKO_FIAT=usd,eur,gbp
@@ -44,6 +44,26 @@ services:
         to:
           - global: true
 
+  api-cache:
+    image: reecepbcups/api-cache:0.0.4
+    depends_on:
+      - redis
+    env:
+      # NOTE - most up to date will be in the docker-compose.yml file
+      - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json
+      - REDIS_URL=redis://akash.provider.domain.here:30830/0
+      - REDIS_REST_PREFIX=unirest
+      - REST_URL=http://15.204.143.232:1317
+      - BACKUP_REST_URL=https://juno-testnet-api.polkachu.com
+      - ENABLE_COUNTER=false
+      - NODE_MONIKER=reecepbcups
+      - API_TITLE=Docker REST
+      - DISABLE_SWAGGER_UI=false
+    expose:
+      - port: 5000
+        to:
+          - global: true       
+
 profiles:
   compute:
     redis:
@@ -55,6 +75,14 @@ profiles:
         storage:
           size: 1Gi
     rpc-cache:
+      resources:
+        cpu:
+          units: 1.0
+        memory:
+          size: 1Gi
+        storage:
+          size: 1Gi
+    api-cache:
       resources:
         cpu:
           units: 1.0
@@ -77,6 +105,9 @@ profiles:
         rpc-cache: 
           denom: uakt
           amount: 10000
+        api-cache: 
+          denom: uakt
+          amount: 10000
 
 
 deployment:
@@ -87,4 +118,8 @@ deployment:
   rpc-cache:
     akash:
       profile: rpc-cache
+      count: 1
+  api-cache:
+    akash:
+      profile: api-cache
       count: 1
