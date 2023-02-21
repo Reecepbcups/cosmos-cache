@@ -10,10 +10,10 @@ services:
 
   # way to change # of workers / threads?
   rpc:
-    image: "reecepbcups/rpc-cache:0.0.4"
+    image: "reecepbcups/rpc-cache:0.0.5"
     network_mode: "host"
-    depends_on:
-      - redis_db
+    # depends_on:
+    #   - redis_db
     environment:
       - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json
       # - REDIS_URL=redis://127.0.0.1:6379
@@ -40,13 +40,13 @@ services:
       - "5001:5001"
 
   api:
-    image: "reecepbcups/api-cache:0.0.4"
+    image: "reecepbcups/api-cache:0.0.5"
     network_mode: "host"
-    depends_on:
-      - redis_db
+    # depends_on:
+    #   - redis_db
     environment:
       - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json
-      - REDIS_URL=redis://redis_db
+      - REDIS_URL=redis://127.0.0.1:6379/0
       - REDIS_REST_PREFIX=unirest
       - REST_URL=http://15.204.143.232:1317
       - BACKUP_REST_URL=https://api.juno.strange.love
