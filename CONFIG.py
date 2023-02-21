@@ -18,7 +18,7 @@ env_file = os.path.join(PROJECT_DIR, ".env")
 
 
 load_dotenv(env_file)
-USE_BACKUP = getenv("USE_BACKUP", "false").lower().startswith("t")
+USE_BACKUP_AS_PRIMARY = getenv("USE_BACKUP_AS_PRIMARY", "false").lower().startswith("t")
 
 ## == Helper == ##
 REMOTE_CONFIG_TIME_FILE = getenv("REMOTE_CONFIG_TIME_FILE", "")
@@ -93,14 +93,14 @@ RPC_PREFIX = getenv("REDIS_RPC_PREFIX", "junorpc")
 
 RPC_URL = getenv("RPC_URL", "https://juno-rpc.reece.sh:443")
 BACKUP_RPC_URL = getenv("BACKUP_RPC_URL", "https://rpc.juno.strange.love:443")
-if USE_BACKUP:
+if USE_BACKUP_AS_PRIMARY:
     RPC_URL = BACKUP_RPC_URL
 
 RPC_WEBSOCKET = getenv("RPC_WEBSOCKET", "ws://15.204.143.232:26657/websocket")
 BACKUP_RPC_WEBSOCKET = getenv(
     "BACKUP_RPC_WEBSOCKET", "ws://rpc.juno.strange.love:443/websocket"
 )
-if USE_BACKUP:
+if USE_BACKUP_AS_PRIMARY:
     RPC_WEBSOCKET = BACKUP_RPC_WEBSOCKET
 
 # ============
@@ -113,7 +113,7 @@ REST_PREFIX = getenv("REDIS_REST_PREFIX", "junorest")
 
 REST_URL = getenv("REST_URL", "https://juno-rest.reece.sh")
 BACKUP_REST_URL = getenv("BACKUP_REST_URL", f"https://api.juno.strange.love")
-if USE_BACKUP:
+if USE_BACKUP_AS_PRIMARY:
     REST_URL = BACKUP_REST_URL
 
 OPEN_API = f"{REST_URL}/static/openapi.yml"
