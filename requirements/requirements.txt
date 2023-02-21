@@ -17,8 +17,8 @@ flask-cors
 uwsgi
 gunicorn
 
-# May not need anymore
-Werkzeug==0.14.1
-uWSGI==2.0.17.1
+# breaks older python installs. Is this needed for docker?
+# Werkzeug==0.14.1
+# uWSGI==2.0.17.1
 
 pycoingecko

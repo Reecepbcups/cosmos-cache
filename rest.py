@@ -2,13 +2,15 @@
 
 import json
 
-import CONFIG as CONFIG
-from CONFIG import REDIS_DB
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
+
+import CONFIG as CONFIG
+from CONFIG import REDIS_DB
 from HELPERS import (
     Mode,
     download_openapi_locally,
+    get_config_values,
     get_stats_html,
     get_swagger_code_from_source,
     increment_call_value,
@@ -67,6 +69,16 @@ def get_rest(path):
             return "Invalid password"
 
         return get_stats_html()
+
+    if path == "config":
+        # https://url/config?password=123
+        if (
+            len(CONFIG.STATS_PASSWORD) > 0
+            and request.args.get("password") != CONFIG.STATS_PASSWORD
+        ):
+            return "Invalid password"
+
+        return get_config_values()
 
     args = request.args
     headers = request.headers
