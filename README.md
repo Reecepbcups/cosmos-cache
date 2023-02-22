@@ -78,9 +78,8 @@ python3 rpc.py
 
 ## Running in Production
 
-- [Create The Systemd files for the REST and RPC](./docs/SYSTEMD_FILES.md)
-
----
+- [Systemd Files](./docs/SYSTEMD_FILES.md)
+- [Akash](./docs/AKASH.md)
 
 ## Documentation
 

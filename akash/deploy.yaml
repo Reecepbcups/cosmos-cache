@@ -1,7 +1,10 @@
 ---
 version: "2.0"
 
-services:  
+# Juno Mainnet Example using public providers.
+
+services:
+  # By default, anyone can access this with the URL & port.
   redis:
     image: redis:latest
     env:
@@ -19,23 +22,24 @@ services:
       - redis
     env:
       # NOTE - most up to date will be in the docker-compose.yml file
-      - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json
+      - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json      
       - REDIS_URL=redis://akash.provider.domain.here:30830/0
-      - REDIS_RPC_PREFIX=unirpc
+      - REDIS_RPC_PREFIX=junorpc_1
       - ENABLE_COUNTER=false
       - USE_BACKUP_AS_PRIMARY=false
-      - RPC_URL=http://5.161.80.115:26657
-      - BACKUP_RPC_URL=https://juno-testnet-rpc.polkachu.com
-      - RPC_WEBSOCKET=ws://5.161.80.115:26657/websocket
-      - RPC_LISTEN_ADDRESS=HIDDEN
+      # Use your own node IPs here as http://
+      - RPC_URL=https://rpc.juno.strange.love:443
+      - BACKUP_RPC_URL=https://juno-rpc.polkachu.com
+      - RPC_WEBSOCKET=ws://15.204.143.232:26657/websocket
       - NODE_MONIKER=reecepbcups
+      - RPC_LISTEN_ADDRESS=HIDDEN
       - NODE_TM_VERSION=HIDDEN
       - COINGECKO_ENABLED=true
       # - COINGECKO_API_KEY=HERE
       - COINGECKO_CACHE_SECONDS=6 # do not change if you do not have an API key.
       - COINGECKO_IDS=cosmos,juno-network,osmosis,canto
       - COINGECKO_FIAT=usd,eur,gbp
-      - RPC_TITLE=Docker RPC cache
+      - RPC_TITLE=Juno Docker RPC
       - RPC_CUSTOM_TEXT=<a href="https://twitter.com/Reecepbcups_/status/1617396571188133888?s=20&t=OKi00IkStINFqYVweZXlaw">Custom caching solution active</a><br><a href="https://juno-api.reece.sh">My Juno REST API</a><br>
     expose:
       - port: 5001
@@ -53,13 +57,14 @@ services:
       # NOTE - most up to date will be in the docker-compose.yml file
       - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json
       - REDIS_URL=redis://akash.provider.domain.here:30830/0
-      - REDIS_REST_PREFIX=unirest
+      - REDIS_REST_PREFIX=junoapi
       - USE_BACKUP_AS_PRIMARY=false
-      - REST_URL=http://15.204.143.232:1317
-      - BACKUP_REST_URL=https://juno-testnet-api.polkachu.com
-      - ENABLE_COUNTER=false
+      # Use your own node IPs here as http://
+      - REST_URL=https://api.juno.strange.love:443
+      - BACKUP_REST_URL=https://juno-api.polkachu.com
       - NODE_MONIKER=reecepbcups
-      - API_TITLE=Docker REST
+      - ENABLE_COUNTER=false
+      - API_TITLE=Juno Docker API
       - DISABLE_SWAGGER_UI=false
     expose:
       - port: 5000
@@ -71,7 +76,7 @@ profiles:
     redis:
       resources:
         cpu:
-          units: 0.25
+          units: 0.5
         memory:
           size: 1Gi
         storage:
@@ -79,7 +84,8 @@ profiles:
     rpc-cache:
       resources:
         cpu:
-          units: 1.0
+          # Must use 2+ CPU (1 for websocket, one for processing requests)
+          units: 2.0
         memory:
           size: 1Gi
         storage:
@@ -87,7 +93,7 @@ profiles:
     api-cache:
       resources:
         cpu:
-          units: 1.0
+          units: 1.25
         memory:
           size: 1Gi
         storage:
