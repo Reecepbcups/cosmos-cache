@@ -3,14 +3,13 @@ version: "2.0"
 
 # Juno Mainnet Example using public providers.
 
-services:
-  # By default, anyone can access this with the URL & port.
+services:  
   redis:
-    image: redis:latest
+    image: bitnami/redis
     env:
       - REDIS_AOF_ENABLED=no
       - ALLOW_EMPTY_PASSWORD=yes
-      # - REDIS_PASSWORD=rootpassword
+      - REDIS_PASSWORD=rootpassword
     expose:
       - port: 6379        
         to:
@@ -23,7 +22,7 @@ services:
     env:
       # NOTE - most up to date will be in the docker-compose.yml file
       - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json      
-      - REDIS_URL=redis://akash.provider.domain.here:30830/0
+      - REDIS_URL=redis://:rootpassword@akash.provider.domain.here:30830/0      
       - REDIS_RPC_PREFIX=junorpc_1
       - ENABLE_COUNTER=false
       - USE_BACKUP_AS_PRIMARY=false
@@ -56,7 +55,7 @@ services:
     env:
       # NOTE - most up to date will be in the docker-compose.yml file
       - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json
-      - REDIS_URL=redis://akash.provider.domain.here:30830/0
+      - REDIS_URL=redis://:rootpassword@akash.provider.domain.here:30830/0
       - REDIS_REST_PREFIX=junoapi
       - USE_BACKUP_AS_PRIMARY=false
       # Use your own node IPs here as http://
