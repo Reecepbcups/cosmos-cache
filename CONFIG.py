@@ -59,7 +59,7 @@ REDIS_URL = getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
 
 if "http://" in REDIS_URL or "https://" in REDIS_URL:
     # remove that http from the url
-    REDIS_URL = REDIS_URL.replace("http://", "").replace("https://", "")
+    REDIS_URL = REDIS_URL.replace("http://", "redis://").replace("https://", "redis://")
     print(
         "WARNING: Found http(s):// in your URL. It has been removed but you should ensure this is correct."
     )
