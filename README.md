@@ -22,6 +22,10 @@ It supports
 - Websocket basic passthrough support for Keplr wallet (TODO)
 - Index blocks (TODO)
 
+## My Nodes running this
+- <https://juno-rpc.reece.sh>
+- <https://juno-api.reece.sh>
+
 ## Pre-Requirements
 
 - A Cosmos RPC / REST server endpoint (state synced, full node, or archive).
