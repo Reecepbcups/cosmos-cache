@@ -66,7 +66,7 @@ cp configs/.env .env
 cp configs/cache_times.json cache_times.json
 
 # Optional: custom redis client configuration
-cp configs/redis_config.json redis_config.json
+cp configs/redis.json redis.json
 
 # THen run to ensure it was setup correctly
 python3 rest.py
