@@ -65,7 +65,11 @@ if "http://" in REDIS_URL or "https://" in REDIS_URL:
     )
 
 REDIS_DB = redis.Redis.from_url(REDIS_URL)
-
+try:
+    REDIS_DB.ping()
+except redis.ConnectionError:
+    print("Error connecting to Redis. Please check if Redis is running and the REDIS_URL is set correctly.")
+    exit(1)
 
 redis_config = get_config_file("redis.json")
 values = json.loads(open(redis_config, "r").read()).items()
