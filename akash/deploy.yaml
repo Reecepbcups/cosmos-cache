@@ -16,7 +16,7 @@ services:
           - global: true
 
   rpc-cache:
-    image: reecepbcups/rpc-cache:0.0.7
+    image: reecepbcups/rpc-cache:0.0.8
     depends_on:
       - redis
     env:
@@ -49,7 +49,7 @@ services:
           - global: true
 
   api-cache:
-    image: reecepbcups/api-cache:0.0.7
+    image: reecepbcups/api-cache:0.0.8
     depends_on:
       - redis
     env:
