@@ -189,7 +189,9 @@ def post_rpc_endpoint():
     # We save/get requests data since it also has the id of said requests from json RPC.
 
     modified_data = dict(REQ_DATA)
-    original_req_id = int(dict(REQ_DATA).get("id", 0))
+
+    # This could also be a UUID
+    original_req_id = dict(REQ_DATA).get("id", 0)
 
     # we set the save key as -1 id since that is not real. This way on requests we are forced to change it back to the original requests
     # this ensures we cache things such as status independent of the requested id.
