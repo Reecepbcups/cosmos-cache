@@ -1,6 +1,5 @@
 # Reece Williams | https://reece.sh | Jan 2023
 
-# import asyncio
 import json
 import logging
 import os
@@ -13,7 +12,7 @@ from flask_sock import Sock
 
 import CONFIG as CONFIG
 from COINGECKO import Coingecko
-from CONFIG import REDIS_DB
+from CONFIG import KV_STORE
 from CONNECT_WEBSOCKET import TendermintRPCWebSocket
 from HELPERS import (
     Mode,
@@ -80,14 +79,20 @@ def cache_info():
 
     We only store the data so any time its requested every X minutes, we regenerate the data.
     """
-    key = f"{CONFIG.RPC_PREFIX};cache_times"
-    v = REDIS_DB.get(key)
+    key = f"rpc;cache_times"
+
+    # v = REDIS_DB.get(key)
+    # if v:
+    #     return jsonify(json.loads(v))
+    v = KV_STORE.get(key)
     if v:
-        return jsonify(json.loads(v))
+        # we can just return v right? (if we save it as json)
+        return jsonify(v)
 
     CONFIG.update_cache_times()
 
-    REDIS_DB.setex(key, 15 * 60, json.dumps(CONFIG.cache_times))
+    # REDIS_DB.setex(key, 15 * 60, json.dumps(CONFIG.cache_times))
+    KV_STORE.set(key, CONFIG.cache_times, 15 * 60)
     return jsonify(CONFIG.cache_times)
 
 
@@ -145,12 +150,13 @@ def get_rpc_endpoint(path: str):
         )
 
     use_hset = use_redis_hashset(path)
-    key = f"{CONFIG.RPC_PREFIX};{ttl_block_only(cache_seconds)};{path}"
+    key = f"rpc;{ttl_block_only(cache_seconds)};{path}"
     if use_hset:
-        v = REDIS_DB.hget(key, str(args))
+        # v = REDIS_DB.hget(key, str(args))
+        v = KV_STORE.hget(key, str(args))
     else:
         key = f"{key};{args}"
-        v = REDIS_DB.get(key)
+        v = KV_STORE.get(key)
 
     if v:
         increment_call_value(CallType.RPC_GET_CACHE.value)
@@ -185,7 +191,7 @@ def post_rpc_endpoint():
         )
 
     use_hset = use_redis_hashset(method)
-    key = f"{CONFIG.RPC_PREFIX};{ttl_block_only(cache_seconds)};{method}"
+    key = f"rpc;{ttl_block_only(cache_seconds)};{method}"
     # We save/get requests data since it also has the id of said requests from json RPC.
 
     modified_data = dict(REQ_DATA)
@@ -198,10 +204,10 @@ def post_rpc_endpoint():
     modified_data["id"] = -1
 
     if use_hset:
-        v = REDIS_DB.hget(key, str(modified_data))
+        v = KV_STORE.hget(key, str(modified_data))
     else:
         key = f"{key};{modified_data}"
-        v = REDIS_DB.get(key)
+        v = KV_STORE.get(key)
 
     if v:
         increment_call_value(CallType.RPC_POST_CACHE.value)

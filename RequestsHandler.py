@@ -3,7 +3,7 @@ import json
 import httpx
 
 import CONFIG
-from CONFIG import REDIS_DB
+from CONFIG import KV_STORE
 from HELPERS import hide_rest_data, hide_rpc_data, increment_call_value
 from HELPERS_TYPES import CallType, Mode
 
@@ -17,13 +17,15 @@ def set_cache_for_time_if_valid(
     redis_key: str,
     res: dict,
     use_hset: bool = False,
-    second_key: str = "",
+    second_key: str = "",  # the params / args
 ):
     increment_call_value(call_key)
 
     if cache_seconds == Mode.NO_CACHE.value:
         # useful for broadcasted txs
         return
+
+    print(f"22222: {redis_key} {second_key}")
 
     if status_code == 200:
         # -2 = clear when a new block is minted
@@ -35,11 +37,12 @@ def set_cache_for_time_if_valid(
 
         if cache_seconds > 0:
             if use_hset:
-                # expires the entire hset at some period of time
-                REDIS_DB.hset(redis_key, second_key, json.dumps(res))
-                REDIS_DB.expire(redis_key, cache_seconds)
+                # Expire timeout is only changed on creation.
+                # Future: per sub key timeouts?
+                KV_STORE.hset(redis_key, second_key, json.dumps(res), cache_seconds)
+                # KV_STORE.delete(redis_key) # Why was this here?
             else:
-                REDIS_DB.setex(redis_key, cache_seconds, json.dumps(res))
+                KV_STORE.set(redis_key, json.dumps(res), cache_seconds)
 
 
 class RestApiHandler:

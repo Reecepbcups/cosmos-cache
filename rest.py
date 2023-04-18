@@ -6,7 +6,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
 
 import CONFIG as CONFIG
-from CONFIG import REDIS_DB
+from CONFIG import KV_STORE
 from HELPERS import (
     Mode,
     download_openapi_locally,
@@ -81,7 +81,6 @@ def get_rest(path):
         return get_config_values()
 
     args = request.args
-    headers = request.headers
 
     cache_seconds = CONFIG.get_cache_time_seconds(path, is_rpc=False)
     if cache_seconds == Mode.DISABLED.value:
@@ -91,17 +90,21 @@ def get_rest(path):
             }
         )
 
-    # Every rest requests is an hset because of headers
-    key = f"{CONFIG.REST_PREFIX};{ttl_block_only(cache_seconds)};{path};{args};"
+    print(cache_seconds)
 
-    v = REDIS_DB.hget(key, str(headers))
+    # Every rest requests is an hset because of diff arguments
+    key = f"rest;{ttl_block_only(cache_seconds)};{path};{args};"
+    print(key)
+
+    v = KV_STORE.hget(key, str(args))
+    print(v)
     if v:
         increment_call_value(CallType.REST_GET_CACHE.value)
         return jsonify(json.loads(v))
 
     return jsonify(
         REST_HANDLER.handle_single_rest_get_requests(
-            path, key, cache_seconds, args, headers
+            path, key, cache_seconds, args, request.headers
         )
     )
 

@@ -4,26 +4,12 @@ version: "2.0"
 # Juno Mainnet Example using public providers.
 
 services:  
-  redis:
-    image: bitnami/redis
-    env:
-      - REDIS_AOF_ENABLED=no
-      # - ALLOW_EMPTY_PASSWORD=yes # testing only
-      - REDIS_PASSWORD=rootpassword
-    expose:
-      - port: 6379        
-        to:
-          - global: true
-
   rpc-cache:
-    image: reecepbcups/rpc-cache:0.0.8
-    depends_on:
-      - redis
+    image: reecepbcups/rpc-cache:0.0.9
     env:
       # NOTE - most up to date will be in the docker-compose.yml file
       - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json      
-      - REDIS_URL=redis://:rootpassword@akash.provider.domain.here:30830/0      
-      - REDIS_RPC_PREFIX=junorpc_1
+      - RPC_PREFIX=junorpc_1
       - ENABLE_COUNTER=false
       - USE_BACKUP_AS_PRIMARY=false
       # Use your own node IPs here as http://
@@ -49,14 +35,11 @@ services:
           - global: true
 
   api-cache:
-    image: reecepbcups/api-cache:0.0.8
-    depends_on:
-      - redis
+    image: reecepbcups/api-cache:0.0.9
     env:
       # NOTE - most up to date will be in the docker-compose.yml file
-      - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json
-      - REDIS_URL=redis://:rootpassword@akash.provider.domain.here:30830/0
-      - REDIS_REST_PREFIX=junoapi
+      - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json      
+      - REST_PREFIX=junoapi
       - USE_BACKUP_AS_PRIMARY=false
       # Use your own node IPs here as http://
       - REST_URL=https://api.juno.strange.love:443
@@ -106,9 +89,6 @@ profiles:
           - "akash1365yvmc4s7awdyj3n2sav7xfx76adc6dnmlx63"
           - "akash18qa2a2ltfyvkyj0ggj3hkvuj6twzyumuaru9s4"
       pricing:
-        redis: 
-          denom: uakt
-          amount: 10000
         rpc-cache: 
           denom: uakt
           amount: 10000
@@ -118,10 +98,6 @@ profiles:
 
 
 deployment:
-  redis:
-    akash:
-      profile: redis
-      count: 1
   rpc-cache:
     akash:
       profile: rpc-cache

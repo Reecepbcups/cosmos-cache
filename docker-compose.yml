@@ -1,25 +1,13 @@
 version: "3.9"
 
 services:    
-  # redis_db:
-  #   image: "redis:latest"   
-  #   restart: always
-  #   network_mode: "host"
-  #   ports:
-  #     - "6379:6379"
-
   # way to change # of workers / threads?
   rpc:
     image: "reecepbcups/rpc-cache:0.0.5"
     network_mode: "host"
-    # depends_on:
-    #   - redis_db
     environment:
-      - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json
-      # - REDIS_URL=redis://127.0.0.1:6379
-      # - REDIS_URL=redis:7000
-      - REDIS_URL=redis://127.0.0.1:6379/0
-      - REDIS_RPC_PREFIX=unirpc
+      - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json            
+      - RPC_PREFIX=unirpc
       - ENABLE_COUNTER=false
       - USE_BACKUP_AS_PRIMARY=false
       - RPC_URL=http://5.161.80.115:26657
@@ -42,12 +30,9 @@ services:
   api:
     image: "reecepbcups/api-cache:0.0.5"
     network_mode: "host"
-    # depends_on:
-    #   - redis_db
     environment:
-      - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json
-      - REDIS_URL=redis://127.0.0.1:6379/0
-      - REDIS_REST_PREFIX=unirest
+      - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json      
+      - REST_PREFIX=unirest
       - REST_URL=http://15.204.143.232:1317
       - BACKUP_REST_URL=https://api.juno.strange.love
       - ENABLE_COUNTER=false
