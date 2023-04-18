@@ -6,3 +6,5 @@ __pycache__/
 /cache_times.json
 
 kvstores/*.json
+
+static/openapi.yml
