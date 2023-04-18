@@ -55,6 +55,8 @@ def get_config_file(filename: str):
     return os.path.join(PROJECT_DIR, "configs", filename)  # default
 
 
+DEBUGGING = getenv("DEBUGGING", "false").lower().startswith("t")
+
 # KVStore
 KV_STORE_NAME = getenv("STORE_NAME", "node_store")
 KV_STORE = KVStore(name=KV_STORE_NAME, dump_dir=KV_DIR)
@@ -143,6 +145,7 @@ def get_cache_time_seconds(path: str, is_rpc: bool) -> int:
 
     cache_seconds = DEFAULT_CACHE_SECONDS
     for k, seconds in endpoints.items():
+        k.replace("*", ".+")
         if re.match(k, path):
             cache_seconds = seconds
             break

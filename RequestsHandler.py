@@ -25,8 +25,6 @@ def set_cache_for_time_if_valid(
         # useful for broadcasted txs
         return
 
-    print(f"22222: {redis_key} {second_key}")
-
     if status_code == 200:
         # -2 = clear when a new block is minted
         if cache_seconds == Mode.FOR_BLOCK_TIME.value:

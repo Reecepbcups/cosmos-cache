@@ -46,6 +46,9 @@ def increment_call_value(key: str, amount: int = 1):
     else:
         total_calls[key] += amount
 
+    if CONFIG.DEBUGGING:
+        print(f"incremented {key} to {total_calls[key]}")
+
     # NOTE: testing only
     # print("testing only dump here")
     # KV_STORE.dump()

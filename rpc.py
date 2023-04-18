@@ -109,19 +109,15 @@ def coingecko():
         return jsonify({"error": "prices are not enabled on this node..."})
 
 
-def use_redis_hashset(path):
+def use_redis_hashset(path, args):
     if any(
         path.startswith(x)
         for x in [
-            "block?height=",
-            "block_by_hash",
-            "block_results",
-            "block_search",
-            "blockchain",
+            "block",
             "tx_search",
         ]
     ):
-        return True
+        return len(args) > 0
     return False
 
 
@@ -149,8 +145,12 @@ def get_rpc_endpoint(path: str):
             }
         )
 
-    use_hset = use_redis_hashset(path)
+    use_hset = use_redis_hashset(path, args)
     key = f"rpc;{ttl_block_only(cache_seconds)};{path}"
+
+    if CONFIG.DEBUGGING:
+        print(f"checking if {path} is in the hashset ({use_hset})...")
+
     if use_hset:
         # v = REDIS_DB.hget(key, str(args))
         v = KV_STORE.hget(key, str(args))
