@@ -80,6 +80,12 @@ def get_rest(path):
 
         return get_config_values()
 
+    if path == "debug":
+        if not CONFIG.DEBUGGING:
+            return "Debugging is not enabled on this cache. Please enable it in your config"
+
+        return jsonify(KV_STORE.to_json())
+
     args = request.args
 
     cache_seconds = CONFIG.get_cache_time_seconds(path, is_rpc=False)
@@ -90,14 +96,14 @@ def get_rest(path):
             }
         )
 
-    print(cache_seconds)
+    # print(cache_seconds)
 
     # Every rest requests is an hset because of diff arguments
-    key = f"rest;{ttl_block_only(cache_seconds)};{path};{args};"
-    print(key)
+    key = f"rest;{ttl_block_only(cache_seconds)};{path};"
 
     v = KV_STORE.hget(key, str(args))
-    print(v)
+    if CONFIG.DEBUGGING:
+        print(f"get_rest. Key: {key} | value: {v}")
     if v:
         increment_call_value(CallType.REST_GET_CACHE.value)
         return jsonify(json.loads(v))

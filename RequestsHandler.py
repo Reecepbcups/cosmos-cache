@@ -33,14 +33,13 @@ def set_cache_for_time_if_valid(
             else:
                 cache_seconds = 6
 
-        if cache_seconds > 0:
-            if use_hset:
-                # Expire timeout is only changed on creation.
-                # Future: per sub key timeouts?
-                KV_STORE.hset(redis_key, second_key, json.dumps(res), cache_seconds)
-                # KV_STORE.delete(redis_key) # Why was this here?
-            else:
-                KV_STORE.set(redis_key, json.dumps(res), cache_seconds)
+        if use_hset:
+            # Expire timeout is only changed on creation.
+            # Future: per sub key timeouts?
+            KV_STORE.hset(redis_key, second_key, json.dumps(res), cache_seconds)
+            # KV_STORE.delete(redis_key) # Why was this here?
+        else:
+            KV_STORE.set(redis_key, json.dumps(res), cache_seconds)
 
 
 class RestApiHandler:
@@ -65,7 +64,7 @@ class RestApiHandler:
             key,
             res,
             use_hset=True,
-            second_key=str(headers),
+            second_key=str(param_args),
         )
 
         return res
