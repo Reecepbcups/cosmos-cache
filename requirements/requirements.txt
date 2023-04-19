@@ -22,4 +22,4 @@ uWSGI==2.0.17.1
 pycoingecko
 
 # https://pypi.org/project/py-kvstore/ / https://github.com/Reecepbcups/py_kvstore
-py-kvstore>=0.0.5
+py-kvstore>=0.0.6
