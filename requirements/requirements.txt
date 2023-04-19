@@ -17,7 +17,7 @@ uwsgi
 gunicorn
 
 # breaks older python installs. Is this needed for docker?
-uWSGI==2.0.17.1
+# uWSGI==2.0.17.1
 
 pycoingecko
 

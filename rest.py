@@ -81,9 +81,6 @@ def get_rest(path):
         return get_config_values()
 
     if path == "debug":
-        if not CONFIG.DEBUGGING:
-            return "Debugging is not enabled on this cache. Please enable it in your config"
-
         return jsonify(KV_STORE.to_json())
 
     args = request.args
