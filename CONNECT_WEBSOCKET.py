@@ -40,8 +40,9 @@ def on_message(ws, message):
 
     del_keys = KV_STORE.get_keys("*;IsBlockOnly;*")
     if len(del_keys) > 0:
-        logger.debug(f"Deleting {len(del_keys)} keys...")
-        KV_STORE.delete(*del_keys)
+        res: bool = KV_STORE.delete(del_keys)
+        if res:
+            logger.debug(f"Deleting {len(del_keys)} keys...")
     # KV_STORE.dump()
 
 

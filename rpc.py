@@ -135,6 +135,9 @@ def favicon():
 def get_rpc_endpoint(path: str):
     global total_calls
 
+    if path == "debug":
+        return jsonify(KV_STORE.to_json())
+
     args = request.args
 
     cache_seconds = CONFIG.get_cache_time_seconds(path, is_rpc=True)
@@ -190,7 +193,7 @@ def post_rpc_endpoint():
             }
         )
 
-    use_hset = use_redis_hashset(method)
+    use_hset = use_redis_hashset(method, request.args)
     key = f"rpc;{ttl_block_only(cache_seconds)};{method}"
     # We save/get requests data since it also has the id of said requests from json RPC.
 
