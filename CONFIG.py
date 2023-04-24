@@ -78,7 +78,7 @@ COINGECKO_FIAT = getenv("COINGECKO_FIAT", "usd,eur").split(",")
 RPC_PORT = int(getenv("RPC_PORT", 5001))
 
 
-RPC_URL = getenv("RPC_URL", "https://juno-rpc.reece.sh:443")
+RPC_URL = getenv("RPC_URL", "https://juno-rpc.polkachu.com:443")
 BACKUP_RPC_URL = getenv("BACKUP_RPC_URL", "https://rpc.juno.strange.love:443")
 if USE_BACKUP_AS_PRIMARY:
     RPC_URL = BACKUP_RPC_URL
@@ -97,7 +97,7 @@ REST_PORT = int(getenv("REST_PORT", 5000))
 
 API_TITLE = getenv("API_TITLE", "Swagger API")
 
-REST_URL = getenv("REST_URL", "https://juno-rest.reece.sh")
+REST_URL = getenv("REST_URL", "https://juno-api.polkachu.com")
 BACKUP_REST_URL = getenv("BACKUP_REST_URL", f"https://api.juno.strange.love")
 if USE_BACKUP_AS_PRIMARY:
     REST_URL = BACKUP_REST_URL

@@ -1,7 +1,7 @@
 # docker build . -f Dockerfile.rest -t reecepbcups/api-cache:latest
-# docker run --name rpc-cache -p 5000:5000 reecepbcups/api-cache:latest
+# docker run -e REST_URL=http://15.204.143.232:1317 -e DISABLE_SWAGGER_UI=false -e REST_WORKER_THREADS=1 -e REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json -p 5000:5000 reecepbcups/api-cache:latest
 
-FROM python:3.6-slim
+FROM python:3.11
 
 RUN apt-get clean \
     && apt-get -y update
@@ -17,4 +17,8 @@ COPY . /srv/flask_app
 WORKDIR /srv/flask_app
 
 EXPOSE 5000
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "rest:app"]
+
+# You can set this at run time with -e
+ENV REST_WORKER_THREADS=1
+
+CMD gunicorn -w ${REST_WORKER_THREADS} -b 0.0.0.0:5000 rest:app

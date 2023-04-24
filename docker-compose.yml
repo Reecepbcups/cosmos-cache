@@ -1,12 +1,13 @@
 version: "3.9"
 
 services:    
-  # way to change # of workers / threads?
+  # Juno testnet endpoints
   rpc:
-    image: "reecepbcups/rpc-cache:0.0.5"
+    image: "reecepbcups/rpc-cache:0.0.9"
     network_mode: "host"
     environment:
-      - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json            
+      - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json       
+      - RPC_WORKER_THREADS=2
       - RPC_PREFIX=unirpc
       - ENABLE_COUNTER=false
       - USE_BACKUP_AS_PRIMARY=false
@@ -27,12 +28,14 @@ services:
     ports:
       - "5001:5001"
 
+  # Juno mainnet endpoints
   api:
-    image: "reecepbcups/api-cache:0.0.5"
+    image: "reecepbcups/api-cache:0.0.9"
     network_mode: "host"
     environment:
       - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json      
       - REST_PREFIX=unirest
+      - REST_WORKER_THREADS=1
       - REST_URL=http://15.204.143.232:1317
       - BACKUP_REST_URL=https://api.juno.strange.love
       - ENABLE_COUNTER=false
