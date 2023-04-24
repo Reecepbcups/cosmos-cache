@@ -5,7 +5,7 @@ from os import getenv
 import httpx
 
 import CONFIG
-from CONFIG import REDIS_DB
+from CONFIG import KV_STORE
 from HELPERS_TYPES import CallType, Mode
 
 
@@ -41,15 +41,24 @@ def increment_call_value(key: str, amount: int = 1):
         total_calls[str(key)] = 0
 
     if total_calls[key] >= CONFIG.INC_EVERY:
-        REDIS_DB.incr(f"{key}", amount=total_calls[key])
+        KV_STORE.incr(f"{key}", amount=total_calls[key])
         total_calls[key] = 0
     else:
         total_calls[key] += amount
+
+    if CONFIG.DEBUGGING:
+        print(f"incremented {key} to {total_calls[key]}")
+
+    # NOTE: testing only
+    # print("testing only dump here")
+    # KV_STORE.dump()
 
 
 def download_openapi_locally():
     # TODO: What if there is no swagger API?
     r = httpx.get(CONFIG.OPEN_API)
+    if r.status_code != 200:
+        return
     file_loc = f"{CONFIG.PROJECT_DIR}/static/openapi.yml"
     with open(file_loc, "w") as f:
         f.write(r.text)
@@ -129,15 +138,15 @@ def get_config_values():
 def get_stats_html():
     updates_every = CONFIG.INC_EVERY
 
-    # gets information about the redis
-    rpc_get_cache = REDIS_DB.get(CallType.RPC_GET_CACHE.value)
-    rpc_get_outbound = REDIS_DB.get(CallType.RPC_GET_OUTBOUND.value)
+    # gets information about the kv store
+    rpc_get_cache = KV_STORE.get(CallType.RPC_GET_CACHE.value)
+    rpc_get_outbound = KV_STORE.get(CallType.RPC_GET_OUTBOUND.value)
 
-    rpc_post_cache = REDIS_DB.get(CallType.RPC_POST_CACHE.value)
-    rpc_post_outbound = REDIS_DB.get(CallType.RPC_POST_OUTBOUND.value)
+    rpc_post_cache = KV_STORE.get(CallType.RPC_POST_CACHE.value)
+    rpc_post_outbound = KV_STORE.get(CallType.RPC_POST_OUTBOUND.value)
 
-    rest_cache = REDIS_DB.get(CallType.REST_GET_CACHE.value)
-    rest_outbound = REDIS_DB.get(CallType.REST_GET_OUTBOUND.value)
+    rest_cache = KV_STORE.get(CallType.REST_GET_CACHE.value)
+    rest_outbound = KV_STORE.get(CallType.REST_GET_OUTBOUND.value)
     # no rest post yet, not added.
 
     # converts (1 so no div / 0 errors)

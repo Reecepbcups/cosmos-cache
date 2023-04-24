@@ -3,9 +3,9 @@ import os
 import re
 from os import getenv
 
-import redis
 import requests
 from dotenv import load_dotenv
+from py_kvstore import KVStore
 
 HEADERS = {
     "accept": "application/json",
@@ -13,6 +13,9 @@ HEADERS = {
 }
 
 PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
+
+KV_DIR = os.path.join(PROJECT_DIR, "kvstores")
+os.makedirs(KV_DIR, exist_ok=True)
 
 env_file = os.path.join(PROJECT_DIR, ".env")
 
@@ -52,31 +55,12 @@ def get_config_file(filename: str):
     return os.path.join(PROJECT_DIR, "configs", filename)  # default
 
 
-# =============
-# === REDIS ===
-# =============
-REDIS_URL = getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
+DEBUGGING = getenv("DEBUGGING", "false").lower().startswith("t")
 
-if "http://" in REDIS_URL or "https://" in REDIS_URL:
-    # remove that http from the url
-    REDIS_URL = REDIS_URL.replace("http://", "redis://").replace("https://", "redis://")
-    print(
-        "WARNING: Found http(s):// in your URL. It has been removed but you should ensure this is correct."
-    )
-
-REDIS_DB = redis.Redis.from_url(REDIS_URL)
-try:
-    REDIS_DB.ping()
-except redis.ConnectionError:
-    print("Error connecting to Redis. Please check if Redis is running and the REDIS_URL is set correctly.")
-    exit(1)
-
-redis_config = get_config_file("redis.json")
-values = json.loads(open(redis_config, "r").read()).items()
-if len(values) > 0:
-    for k, v in values:
-        REDIS_DB.config_set(k, v)
-
+# KVStore
+KV_STORE_NAME = getenv("STORE_NAME", "node_store")
+KV_STORE = KVStore(name=KV_STORE_NAME, dump_dir=KV_DIR)
+KV_STORE.load()
 
 ENABLE_COUNTER = getenv("ENABLE_COUNTER", "true").lower().startswith("t")
 INC_EVERY = int(getenv("INCREASE_COUNTER_EVERY", 250))
@@ -92,10 +76,9 @@ COINGECKO_FIAT = getenv("COINGECKO_FIAT", "usd,eur").split(",")
 # === RPC ===
 # ===========
 RPC_PORT = int(getenv("RPC_PORT", 5001))
-RPC_PREFIX = getenv("REDIS_RPC_PREFIX", "junorpc")
 
 
-RPC_URL = getenv("RPC_URL", "https://juno-rpc.reece.sh:443")
+RPC_URL = getenv("RPC_URL", "https://juno-rpc.polkachu.com:443")
 BACKUP_RPC_URL = getenv("BACKUP_RPC_URL", "https://rpc.juno.strange.love:443")
 if USE_BACKUP_AS_PRIMARY:
     RPC_URL = BACKUP_RPC_URL
@@ -113,9 +96,8 @@ if USE_BACKUP_AS_PRIMARY:
 REST_PORT = int(getenv("REST_PORT", 5000))
 
 API_TITLE = getenv("API_TITLE", "Swagger API")
-REST_PREFIX = getenv("REDIS_REST_PREFIX", "junorest")
 
-REST_URL = getenv("REST_URL", "https://juno-rest.reece.sh")
+REST_URL = getenv("REST_URL", "https://juno-api.polkachu.com")
 BACKUP_REST_URL = getenv("BACKUP_REST_URL", f"https://api.juno.strange.love")
 if USE_BACKUP_AS_PRIMARY:
     REST_URL = BACKUP_REST_URL
@@ -136,6 +118,7 @@ cache_times: dict = {}
 RPC_ENDPOINTS: dict = {}
 REST_ENDPOINTS: dict = {}
 COINGECKO_CACHE: dict = {}
+
 
 # === CACHE HELPER ===
 def update_cache_times():
@@ -162,6 +145,7 @@ def get_cache_time_seconds(path: str, is_rpc: bool) -> int:
 
     cache_seconds = DEFAULT_CACHE_SECONDS
     for k, seconds in endpoints.items():
+        k.replace("*", ".+")
         if re.match(k, path):
             cache_seconds = seconds
             break

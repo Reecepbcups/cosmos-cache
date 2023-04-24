@@ -29,7 +29,6 @@ It supports
 ## Pre-Requirements
 
 - A Cosmos RPC / REST server endpoint (state synced, full node, or archive).
-- A Redis server (local, or remote).
 - A reverse proxy (to forward subdomain -> the endpoint cache on a machine)
 
 ## Where to run
@@ -38,21 +37,6 @@ Ideally, you should run this on your RPC/REST Node for localhost queries. Howeve
 This makes it possible to run on cloud providers like Akash, AWS, GCP, Azure, etc.
 
 ---
-
-### Redis Install
-
-```sh
-# System
-sudo apt install redis-server python3-pip 
-
-sudo pacman -Sy redis-server
-
-systemctl start redis
-systemctl enable redis
-
-# or Docker
-docker run -d --name redis -p 6379:6379 redis
-```
 
 ## Setup
 
@@ -64,9 +48,6 @@ cp configs/.env .env
 
 # Update which endpoints you want to disable / allow (regex) & how long to cache each for.
 cp configs/cache_times.json cache_times.json
-
-# Optional: custom redis client configuration
-cp configs/redis.json redis.json
 
 # THen run to ensure it was setup correctly
 python3 rest.py

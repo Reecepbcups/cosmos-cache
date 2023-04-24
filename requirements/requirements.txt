@@ -5,7 +5,6 @@ python-dotenv
 websocket-client # import websocket
 rel
 
-redis
 httpx
 
 Flask
@@ -17,7 +16,11 @@ flask-cors
 uwsgi
 gunicorn
 
+# REMOVED; no longer used afaik
 # breaks older python installs. Is this needed for docker?
-uWSGI==2.0.17.1
+# uWSGI==2.0.17.1
 
 pycoingecko
+
+# https://pypi.org/project/py-kvstore/ / https://github.com/Reecepbcups/py_kvstore
+py-kvstore>=0.0.7

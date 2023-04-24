@@ -25,6 +25,8 @@
         ".*\/blocks/latest": -2,
 
         ".*\/params": 3600,
+        ".*\/minimum_gas_prices": 300,
+        ".*\/fee_shares": 30,
         ".*delegations": 300,
         ".*slashes": 60,
         ".*commission": 30,

@@ -3,5 +3,4 @@
 
 /.env
 /cache_times.json
-/redis.json
 /README.md

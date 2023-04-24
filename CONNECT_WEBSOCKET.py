@@ -4,14 +4,16 @@ import logging
 import rel
 import websocket
 
-from CONFIG import REDIS_DB, RPC_WEBSOCKET
+from CONFIG import KV_STORE, RPC_WEBSOCKET
 
 SUBSCRIBE_MSG = '{"jsonrpc": "2.0", "method": "subscribe", "params": ["tm.event=\'NewBlock\'"], "id": 1}'
 
 logger = logging.getLogger(__name__)
 
+CONNECTED = False
 
-# on a new block message, we will clear redis of any values which the config set to -2
+
+# on a new block message, we will clear in the KV Store of any values which the config set to -2
 # Use this for an indexer in the future?? :D
 def on_message(ws, message):
     msg = json.loads(message)
@@ -36,11 +38,12 @@ def on_message(ws, message):
 
     logger.debug(f"""New Block: {block_height}""")
 
-    # resets all blockOnly keys (balances for example)
-    del_keys = REDIS_DB.keys("*;IsBlockOnly;*")
+    del_keys = KV_STORE.get_keys("*;IsBlockOnly;*")
     if len(del_keys) > 0:
-        logger.debug(f"Deleting {len(del_keys)} keys...")
-        REDIS_DB.delete(*del_keys)
+        res: bool = KV_STORE.delete(del_keys)
+        if res:
+            logger.debug(f"Deleting {len(del_keys)} keys...")
+    # KV_STORE.dump()
 
 
 def on_error(ws, error):

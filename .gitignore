@@ -3,5 +3,8 @@ __pycache__/
 
 # ignores project root directory configs
 /.env
-/redis.json
 /cache_times.json
+
+kvstores/*.json
+
+static/openapi.yml
