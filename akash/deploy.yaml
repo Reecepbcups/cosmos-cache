@@ -55,14 +55,6 @@ services:
 
 profiles:
   compute:
-    redis:
-      resources:
-        cpu:
-          units: 0.5
-        memory:
-          size: 1Gi
-        storage:
-          size: 1Gi
     rpc-cache:
       resources:
         cpu:
