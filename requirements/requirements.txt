@@ -7,7 +7,7 @@ rel
 
 httpx
 
-Flask
+Flask==2.2.4
 flask_caching
 flask-sock
 Flask-SocketIO

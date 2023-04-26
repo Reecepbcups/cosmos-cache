@@ -6,14 +6,13 @@ import os
 import re
 import threading
 
-from flask import Flask, jsonify, request, send_from_directory
-from flask_cors import CORS, cross_origin
-from flask_sock import Sock
-
 import CONFIG as CONFIG
 from COINGECKO import Coingecko
 from CONFIG import KV_STORE
 from CONNECT_WEBSOCKET import TendermintRPCWebSocket
+from flask import Flask, jsonify, request, send_from_directory
+from flask_cors import CORS, cross_origin
+from flask_sock import Sock
 from HELPERS import (
     Mode,
     hide_rpc_data,
