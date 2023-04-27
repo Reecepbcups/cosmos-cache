@@ -5,7 +5,7 @@ version: "2.0"
 
 services:  
   rpc-cache:
-    image: reecepbcups/rpc-cache:0.0.9
+    image: reecepbcups/rpc-cache:0.0.10
     env:
       # NOTE - most up to date will be in the docker-compose.yml file
       - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json      
@@ -35,7 +35,7 @@ services:
           - global: true
 
   api-cache:
-    image: reecepbcups/api-cache:0.0.9
+    image: reecepbcups/api-cache:0.0.10
     env:
       # NOTE - most up to date will be in the docker-compose.yml file
       - REMOTE_CONFIG_TIME_FILE=https://raw.githubusercontent.com/Reecepbcups/cosmos-endpoint-cache/main/configs/cache_times.json      
