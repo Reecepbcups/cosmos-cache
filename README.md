@@ -66,6 +66,7 @@ python3 rpc.py
 ## Running in Production
 
 - [Systemd Files](./docs/SYSTEMD_FILES.md)
+- [Tendermint Websocket Support](./docs/WEBSOCKET.md)
 - [Akash](./docs/AKASH.md)
 
 ## Documentation
