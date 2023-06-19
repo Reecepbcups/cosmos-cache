@@ -22,9 +22,17 @@ It supports
 - Websocket basic passthrough support for Keplr wallet (TODO)
 - Index blocks (TODO)
 
-## My Nodes running this
+## Public Endpoints
+
+### Juno
 - <https://juno-rpc.reece.sh>
 - <https://juno-api.reece.sh>
+
+### Akash
+- <https://cached-rpc-akash.sg1.online/>
+
+### CosmosHub
+- <https://cached-rpc-cosmos.sg1.online/>
 
 ## Pre-Requirements
 
