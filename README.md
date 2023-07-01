@@ -26,13 +26,23 @@ It supports
 
 ### Juno
 - <https://juno-rpc.reece.sh>
-- <https://juno-api.reece.sh>
+- <https://rpc-juno.goldenratiostaking.net/>
 
 ### Akash
 - <https://cached-rpc-akash.sg1.online/>
 
 ### CosmosHub
 - <https://cached-rpc-cosmos.sg1.online/>
+- <https://rpc-cosmoshub.goldenratiostaking.net/>
+
+### Comdex
+- <https://rpc-comdex.goldenratiostaking.net/>
+
+### Chihuahua
+- <https://rpc-chihuahua.goldenratiostaking.net/>
+
+### Injective
+- <https://rpc-injective.goldenratiostaking.net/>
 
 ## Pre-Requirements
 
