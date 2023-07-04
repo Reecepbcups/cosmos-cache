@@ -132,7 +132,7 @@ func rpcHtmlView(w http.ResponseWriter, r *http.Request, cfg *Config, body strin
 func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg *Config, cache *ttlcache.Cache[string, string]) {
 	// if request is for /, then show the html view
 	if r.URL.Path == "/" && HTMLCache != "" && endpoint == rpc {
-		fmt.Println("HTML Cache hit")
+		// fmt.Println("HTML Cache hit")
 		stats["HTML_CACHE"]++
 		w.Header().Set("Content-Type", "text/html")
 
@@ -152,7 +152,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg 
 		return
 	}
 
-	fmt.Println(url)
+	// fmt.Println(url)
 	res, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -267,7 +267,6 @@ func main() {
 			if cfg.API_TITLE != "" {
 				// TODO: If swagger is disabled, then do a different replace.
 				for _, line := range strings.Split(string(body), "\n") {
-					fmt.Print(line)
 					if strings.Contains(line, "<title>") {
 						body = []byte(strings.ReplaceAll(string(body), line, fmt.Sprintf("<title>%s</title>", cfg.API_TITLE)))
 						break
@@ -304,7 +303,7 @@ func main() {
 			return
 		}
 
-		fmt.Println(r.URL.Path)
+		// fmt.Println(r.URL.Path)
 		if _, ok := rpcEndpoints[r.URL.Path]; ok {
 			HandleRequest(w, r, rpc, cfg, cache)
 			return
