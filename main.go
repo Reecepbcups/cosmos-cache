@@ -11,12 +11,9 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/jellydator/ttlcache/v3"
 
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 )
-
-// If I get a list of all RPC endpoints (GET and POST), can then smart route to REST endpoint through 1 URL.
 
 const (
 	rpc                     = "https://rpc.juno.strange.love"
@@ -27,6 +24,7 @@ const (
 )
 
 var (
+	// Set in ctx instead?
 	HTMLCache           = ""
 	OpenAPISwaggerCache = ""
 
@@ -66,9 +64,9 @@ var (
 
 	DefaultCacheTime = 6 * time.Second
 
-	cache = ttlcache.New[string, string](
-		ttlcache.WithTTL[string, string](30 * time.Minute),
-	)
+	cache = Cache{
+		Store: make(map[string]CacheValue),
+	}
 
 	// TODO: Status codes
 	stats = make(map[string]int)
@@ -100,7 +98,7 @@ func blockSubscribe() {
 			time.Sleep(websocketPolling)
 			continue
 		case <-block:
-			cache.DeleteExpired()
+			cache.ClearExpired()
 			fmt.Println("Cache cleared")
 		}
 	}
@@ -114,22 +112,29 @@ func rpcHtmlView(w http.ResponseWriter, r *http.Request, cfg *Config, body strin
 
 	base := strings.ReplaceAll(body, baseRpc, r.Host)
 
+	coingeckoURL := fmt.Sprintf("Coingecko Asset Prices:<br><a href=//%s/prices>//%s/prices</a><br>", r.Host, r.Host)
 	if cfg.COINGECKO_ENABLED {
-		base = strings.ReplaceAll(base, "Available endpoints:<br>", fmt.Sprintf("Coingecko Asset Prices:<br><a href=//%s/prices>//%s/prices</a><br>", r.Host, r.Host))
+		base = strings.ReplaceAll(base, "Available endpoints:<br>", coingeckoURL)
 	}
 
 	if cfg.RPC_TITLE != "" {
-		base = strings.ReplaceAll(base, "<html>", fmt.Sprintf("<html><title>%s</title>", cfg.RPC_TITLE))
+		title := fmt.Sprintf("<html><title>%s</title>", cfg.RPC_TITLE)
+		base = strings.ReplaceAll(base, "<html>", title)
 	}
 
 	if cfg.RPC_CUSTOM_TEXT != "" {
 		base = strings.ReplaceAll(base, "<body>", fmt.Sprintf("<body>%s", cfg.RPC_CUSTOM_TEXT))
 	}
 
+	apiURL := fmt.Sprintf("%s<br>REST API:<br><a href=//%s/api>//%s/api</a><br>", coingeckoURL, r.Host, r.Host)
+	if cfg.REST_URL != "" {
+		base = strings.ReplaceAll(base, coingeckoURL, apiURL)
+	}
+
 	return []byte(base)
 }
 
-func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg *Config, cache *ttlcache.Cache[string, string]) {
+func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg *Config, cache Cache) {
 	// if request is for /, then show the html view
 	if r.URL.Path == "/" && HTMLCache != "" && endpoint == rpc {
 		// fmt.Println("HTML Cache hit")
@@ -148,7 +153,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg 
 	if res := cache.Get(url); res != nil {
 		fmt.Println("Cache hit")
 		stats["CACHE_"+endpoint]++
-		fmt.Fprint(w, res.Value())
+		fmt.Fprint(w, res.Value)
 		return
 	}
 
@@ -178,8 +183,6 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg 
 
 func main() {
 	cfg := LoadConfigFromFile(".env")
-
-	go cache.Start()
 
 	r := mux.NewRouter()
 
