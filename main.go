@@ -118,6 +118,10 @@ func rpcHtmlView(w http.ResponseWriter, r *http.Request, cfg *Config, body strin
 		base = strings.ReplaceAll(base, "<html>", fmt.Sprintf("<html><title>%s</title>", cfg.RPC_TITLE))
 	}
 
+	if cfg.RPC_CUSTOM_TEXT != "" {
+		base = strings.ReplaceAll(base, "<body>", fmt.Sprintf("<body>%s", cfg.RPC_CUSTOM_TEXT))
+	}
+
 	return []byte(base)
 }
 
