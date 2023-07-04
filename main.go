@@ -62,7 +62,7 @@ var (
 		"/validators":           true,
 	}
 
-	DefaultCacheTime = 6 * time.Second
+	DefaultCacheTimeSeconds = 6
 
 	cache = Cache{
 		Store: make(map[string]CacheValue),
@@ -98,8 +98,11 @@ func blockSubscribe() {
 			time.Sleep(websocketPolling)
 			continue
 		case <-block:
-			cache.ClearExpired()
-			fmt.Println("Cache cleared")
+			cleared := cache.ClearExpired(true)
+			if cleared > 0 {
+				fmt.Printf("Cache cleared %d keys.\n", cleared)
+				fmt.Printf("Cache has %d remaining.\n", len(cache.Keys()))
+			}
 		}
 	}
 }
@@ -148,7 +151,15 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	url := endpoint + r.URL.Path + "?" + r.URL.Query().Encode()
+	fullPath := r.URL.Path + "?" + r.URL.Query().Encode()
+	url := endpoint + fullPath
+
+	timeout := cfg.GetTimeout(fullPath)
+	// fmt.Println("Timeout of", timeout)
+	if timeout == -1 {
+		fmt.Fprintf(w, `{"error":"This endpoint '%s' is disabled."}`, r.URL.Path)
+		return
+	}
 
 	if res := cache.Get(url); res != nil {
 		fmt.Println("Cache hit")
@@ -157,7 +168,6 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg 
 		return
 	}
 
-	// fmt.Println(url)
 	res, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -168,14 +178,14 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg 
 		log.Fatal(err)
 	}
 
-	if string(body)[:6] == "<html>" {
+	if strings.HasPrefix(string(body), "<html>") {
 		body = rpcHtmlView(w, r, cfg, string(body))
 
 		HTMLCache = string(body)
+		return
 	}
 
-	// TODO: JSON / YAML config allowing regex changing based off input.
-	cache.Set(url, string(body), DefaultCacheTime)
+	cache.Set(url, string(body), timeout)
 
 	stats[endpoint]++
 	fmt.Fprint(w, string(body))
@@ -183,6 +193,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg 
 
 func main() {
 	cfg := LoadConfigFromFile(".env")
+	cfg.LoadCacheTimes("cache_times.json")
 
 	r := mux.NewRouter()
 

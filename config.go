@@ -1,9 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"regexp"
+	"strings"
 
+	"github.com/iancoleman/orderedmap"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 )
@@ -42,10 +47,35 @@ type Config struct {
 
 	APP_HOST string `envconfig:"APP_HOST"`
 	APP_PORT string `envconfig:"APP_PORT"`
+
+	CACHE_TIMES *orderedmap.OrderedMap `json:"-"`
+}
+
+func (c *Config) GetTimeout(path string) int {
+	if c.CACHE_TIMES == nil {
+		return DefaultCacheTimeSeconds
+	}
+
+	if strings.HasPrefix(path, "/favicon.ico") {
+		return 0
+	}
+
+	for _, expr := range c.CACHE_TIMES.Keys() {
+		if match, _ := regexp.MatchString(expr, path); match {
+			seconds, _ := c.CACHE_TIMES.Get(expr)
+
+			if c.DEBUGGING {
+				fmt.Printf("Regex match: %s %v (expr:%s)\n", path, seconds, expr)
+			}
+
+			return int(seconds.(float64))
+		}
+	}
+
+	return DefaultCacheTimeSeconds
 }
 
 func LoadConfigFromFile(filename string) *Config {
-	// load from the .env file as filename
 	err := godotenv.Load(filename)
 	if err != nil {
 		log.Fatal(err)
@@ -57,8 +87,21 @@ func LoadConfigFromFile(filename string) *Config {
 		panic(err)
 	}
 
-	// print cfg
-	fmt.Printf("%+v\n", cfg)
-
 	return &cfg
+}
+
+func (config *Config) LoadCacheTimes(filename string) {
+	jsonData, err := ioutil.ReadFile(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	om := orderedmap.New()
+
+	err = json.Unmarshal(jsonData, &om)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	config.CACHE_TIMES = om
 }
