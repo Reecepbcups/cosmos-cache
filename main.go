@@ -114,6 +114,10 @@ func rpcHtmlView(w http.ResponseWriter, r *http.Request, cfg *Config, body strin
 
 	base := strings.ReplaceAll(body, baseRpc, r.Host)
 
+	if cfg.COINGECKO_ENABLED {
+		base = strings.ReplaceAll(base, "Available endpoints:<br>", fmt.Sprintf("Coingecko Asset Prices:<br><a href=//%s/prices>//%s/prices</a><br>", r.Host, r.Host))
+	}
+
 	if cfg.RPC_TITLE != "" {
 		base = strings.ReplaceAll(base, "<html>", fmt.Sprintf("<html><title>%s</title>", cfg.RPC_TITLE))
 	}
@@ -202,9 +206,13 @@ func main() {
 	})
 
 	r.HandleFunc("/prices", func(w http.ResponseWriter, r *http.Request) {
+		if !cfg.COINGECKO_ENABLED {
+			fmt.Fprint(w, "Coingecko not enabled on this node.")
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 
-		prices := CoingeckoQuery(httpClient, "cosmos,canto,juno-network,osmosis,wynd", "eur,gbp,usd")
+		prices := CoingeckoQuery(httpClient, cfg.COINGECKO_IDS, cfg.COINGECKO_FIAT)
 		pricesJson, err := json.Marshal(prices)
 		if err != nil {
 			log.Fatal(err)
@@ -306,13 +314,13 @@ func main() {
 	})
 
 	// Start the server
-	port := cfg.APP_HOST + ":" + cfg.APP_PORT
+	endpoint := cfg.APP_HOST + ":" + cfg.APP_PORT
 
-	fmt.Print("Starting server on port http://localhost:8080...")
-	http.ListenAndServe(port, r)
+	fmt.Println("Starting server on " + endpoint)
+	http.ListenAndServe(endpoint, r)
 	for {
-		fmt.Println("Restarting server on port http://localhost:8080 due to crash...")
-		err := http.ListenAndServe(port, r)
+		fmt.Println("Restarting on " + endpoint + " due to crash...")
+		err := http.ListenAndServe(endpoint, r)
 		if err != nil {
 			fmt.Println(err.Error())
 		}
