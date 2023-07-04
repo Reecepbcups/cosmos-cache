@@ -88,7 +88,7 @@ func blockSubscribe() {
 	for {
 		select {
 		case <-ctx.Done():
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(websocketPolling)
 			continue
 		case <-block:
 			cache = make(map[string]string)
@@ -155,6 +155,11 @@ func main() {
 	httpClient := &http.Client{
 		Timeout: time.Second * 10,
 	}
+
+	// panic | crash
+	r.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) {
+		panic("Panic!")
+	})
 
 	r.HandleFunc("/prices", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -235,5 +240,12 @@ func main() {
 
 	// Start the server
 	fmt.Print("Starting server on port http://localhost:8080...")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	http.ListenAndServe(":8080", r)
+	for {
+		fmt.Println("Restarting server on port http://localhost:8080 due to crash...")
+		err := http.ListenAndServe(":8080", r)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}
 }
