@@ -11,15 +11,17 @@ import (
 
 	"github.com/gorilla/mux"
 
-	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
+	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 )
 
 // If I get a list of all RPC endpoints (GET and POST), can then smart route to REST endpoint through 1 URL.
 
 const (
-	rpc       = "https://rpc.juno.strange.love"
-	api       = "https://api.juno.strange.love"
-	websocket = "wss://rpc.juno.strange.love/websocket"
+	rpc                     = "https://rpc.juno.strange.love"
+	api                     = "https://api.juno.strange.love"
+	websocketUrl, websocket = "https://rpc.juno.strange.love:443", "/websocket"
+
+	websocketPolling = 100 * time.Millisecond
 )
 
 var (
@@ -58,22 +60,41 @@ var (
 		"/unsubscribe_all":      true,
 		"/validators":           true,
 	}
+
+	cache = make(map[string]string)
 )
 
 func blockSubscribe() {
-	client, err := rpchttp.New(rpc)
+	client, err := rpchttp.New(websocketUrl, websocket)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
-	// Subscribe to new blocks
-	eventCh, err := client.Subscribe(context.Background(), "test-client", "tm.event = 'NewBlock'")
+	err = client.Start()
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
+	}
+	defer client.Stop()
+
+	fmt.Println(client)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	block, err := client.Subscribe(ctx, "cosmoscache-client", "tm.event = 'NewBlock'")
+	if err != nil {
+		panic(err)
 	}
 
-	for event := range eventCh {
-		fmt.Println(event)
+	for {
+		select {
+		case <-ctx.Done():
+			time.Sleep(100 * time.Millisecond)
+			continue
+		case <-block:
+			cache = make(map[string]string)
+			fmt.Println("Cache cleared")
+		}
 	}
 }
 
@@ -130,20 +151,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cach
 func main() {
 	r := mux.NewRouter()
 
-	// create a map which will be a 6 second cache
-	cache := make(map[string]string)
-
 	go blockSubscribe()
-
-	go func() {
-		for {
-			cache = make(map[string]string)
-			fmt.Println("Cache cleared")
-
-			// This would be a websocket connection
-			<-time.After(6 * time.Second)
-		}
-	}()
 
 	// if route is static/openapi.yml, then show the swagger api
 	r.HandleFunc("/static/openapi.yml", func(w http.ResponseWriter, r *http.Request) {
