@@ -106,21 +106,28 @@ func blockSubscribe() {
 	}
 }
 
-func htmlView(w http.ResponseWriter, r *http.Request, body string) []byte {
+func rpcHtmlView(w http.ResponseWriter, r *http.Request, cfg *Config, body string) []byte {
 	w.Header().Set("Content-Type", "text/html")
 
 	baseRpc := strings.ReplaceAll(rpc, "http://", "")
 	baseRpc = strings.ReplaceAll(baseRpc, "https://", "")
 
-	return []byte(strings.ReplaceAll(body, baseRpc, r.Host))
+	base := strings.ReplaceAll(body, baseRpc, r.Host)
+
+	if cfg.RPC_TITLE != "" {
+		base = strings.ReplaceAll(base, "<html>", fmt.Sprintf("<html><title>%s</title>", cfg.RPC_TITLE))
+	}
+
+	return []byte(base)
 }
 
-func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cache *ttlcache.Cache[string, string]) {
+func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg *Config, cache *ttlcache.Cache[string, string]) {
 	// if request is for /, then show the html view
 	if r.URL.Path == "/" && HTMLCache != "" && endpoint == rpc {
 		fmt.Println("HTML Cache hit")
 		stats["HTML_CACHE"]++
 		w.Header().Set("Content-Type", "text/html")
+
 		fmt.Fprint(w, HTMLCache)
 		return
 	}
@@ -149,7 +156,8 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cach
 	}
 
 	if string(body)[:6] == "<html>" {
-		body = htmlView(w, r, string(body))
+		body = rpcHtmlView(w, r, cfg, string(body))
+
 		HTMLCache = string(body)
 	}
 
@@ -228,8 +236,7 @@ func main() {
 
 	// handle func for any route / wildcard
 	r.HandleFunc("/{route:.*}", func(w http.ResponseWriter, r *http.Request) {
-		// if path url is just /api, then show the swagger api
-		if r.URL.Path == "/api" {
+		if r.URL.Path == "/api" || r.URL.Path == "/swagger" {
 			stats["rest_api"]++
 			fmt.Println("REST API hit")
 			// get api as http get
@@ -242,6 +249,18 @@ func main() {
 			body, err := ioutil.ReadAll(res.Body)
 			if err != nil {
 				log.Fatal(err)
+			}
+
+			// Set Swagger title.
+			if cfg.API_TITLE != "" {
+				// TODO: If swagger is disabled, then do a different replace.
+				for _, line := range strings.Split(string(body), "\n") {
+					fmt.Print(line)
+					if strings.Contains(line, "<title>") {
+						body = []byte(strings.ReplaceAll(string(body), line, fmt.Sprintf("<title>%s</title>", cfg.API_TITLE)))
+						break
+					}
+				}
 			}
 
 			if OpenAPISwaggerCache == "" {
@@ -275,12 +294,11 @@ func main() {
 
 		fmt.Println(r.URL.Path)
 		if _, ok := rpcEndpoints[r.URL.Path]; ok {
-			HandleRequest(w, r, rpc, cache)
+			HandleRequest(w, r, rpc, cfg, cache)
 			return
 		} else {
-			HandleRequest(w, r, api, cache)
+			HandleRequest(w, r, api, cfg, cache)
 		}
-
 	})
 
 	// Start the server
