@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -75,8 +76,6 @@ func blockSubscribe() {
 		panic(err)
 	}
 	defer client.Stop()
-
-	fmt.Println(client)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -152,6 +151,22 @@ func main() {
 	r := mux.NewRouter()
 
 	go blockSubscribe()
+
+	httpClient := &http.Client{
+		Timeout: time.Second * 10,
+	}
+
+	r.HandleFunc("/prices", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		prices := CoingeckoQuery(httpClient, "cosmos,canto,juno-network,osmosis,wynd", "eur,gbp,usd")
+		pricesJson, err := json.Marshal(prices)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Fprint(w, string(pricesJson))
+	})
 
 	// if route is static/openapi.yml, then show the swagger api
 	r.HandleFunc("/static/openapi.yml", func(w http.ResponseWriter, r *http.Request) {

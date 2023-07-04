@@ -4,6 +4,8 @@ go 1.20
 
 require github.com/gorilla/mux v1.8.0
 
+require github.com/superoo7/go-gecko v1.0.0 // indirect
+
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.1 // indirect
