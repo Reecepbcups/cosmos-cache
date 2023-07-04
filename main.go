@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 )
@@ -26,7 +27,8 @@ const (
 )
 
 var (
-	HTMLCache = ""
+	HTMLCache           = ""
+	OpenAPISwaggerCache = ""
 
 	// TODO: Get this on first request to / and then parse and save it? (tm 37 support?)
 	rpcEndpoints = map[string]bool{
@@ -63,6 +65,9 @@ var (
 	}
 
 	cache = make(map[string]string)
+
+	// TODO: Status codes
+	stats = make(map[string]int)
 )
 
 func blockSubscribe() {
@@ -110,6 +115,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cach
 	// if request is for /, then show the html view
 	if r.URL.Path == "/" && HTMLCache != "" && endpoint == rpc {
 		fmt.Println("HTML Cache hit")
+		stats["HTML_CACHE"]++
 		w.Header().Set("Content-Type", "text/html")
 		fmt.Fprint(w, HTMLCache)
 		return
@@ -122,6 +128,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cach
 
 	if val, ok := cache[url]; ok {
 		fmt.Println("Cache hit")
+		stats["CACHE_"+endpoint]++
 		fmt.Fprint(w, val)
 		return
 	}
@@ -143,11 +150,15 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cach
 
 	cache[url] = string(body)
 
-	// write the body to the response writer
+	stats[endpoint]++
 	fmt.Fprint(w, string(body))
 }
 
 func main() {
+	if err := godotenv.Load(".env"); err != nil {
+		log.Print("No .env file found")
+	}
+
 	r := mux.NewRouter()
 
 	go blockSubscribe()
@@ -161,6 +172,17 @@ func main() {
 		panic("Panic!")
 	})
 
+	r.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		statsJson, err := json.Marshal(stats)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Fprint(w, string(statsJson))
+	})
+
 	r.HandleFunc("/prices", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
@@ -170,28 +192,40 @@ func main() {
 			log.Fatal(err)
 		}
 
+		stats["prices"]++
+
 		fmt.Fprint(w, string(pricesJson))
 	})
 
 	// if route is static/openapi.yml, then show the swagger api
 	r.HandleFunc("/static/openapi.yml", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("API hit")
-		// read static/openapi.yml
+		fmt.Println("OpenAPI cache hit")
+
+		w.Header().Set("Content-Type", "text/html")
+
+		if len(OpenAPISwaggerCache) > 0 {
+			stats["open_api_cache"]++
+			fmt.Fprint(w, OpenAPISwaggerCache)
+			return
+		}
+
 		body, err := ioutil.ReadFile("static/openapi.yml")
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		w.Header().Set("Content-Type", "text/html")
-		fmt.Fprint(w, string(body))
+		stats["open_api"]++
+
+		OpenAPISwaggerCache = string(body)
+		fmt.Fprint(w, OpenAPISwaggerCache)
 	})
 
 	// handle func for any route / wildcard
 	r.HandleFunc("/{route:.*}", func(w http.ResponseWriter, r *http.Request) {
-
 		// if path url is just /api, then show the swagger api
 		if r.URL.Path == "/api" {
-			fmt.Println("API hit")
+			stats["rest_api"]++
+			fmt.Println("REST API hit")
 			// get api as http get
 			w.Header().Set("Content-Type", "text/html")
 			res, err := http.Get(api)
@@ -204,20 +238,25 @@ func main() {
 				log.Fatal(err)
 			}
 
-			// get static/openapi.yml from the api
-			res, err = http.Get(api + "/static/openapi.yml")
-			if err != nil {
-				log.Fatal(err)
-			}
+			if OpenAPISwaggerCache == "" {
+				stats["open_api_download"]++
+				// get static/openapi.yml from the api
+				res, err = http.Get(api + "/static/openapi.yml")
+				if err != nil {
+					log.Fatal(err)
+				}
 
-			// save res to static/openapi.yml in this directory
-			openapi, err := ioutil.ReadAll(res.Body)
-			if err != nil {
-				log.Fatal(err)
+				// save res to static/openapi.yml in this directory
+				openapi, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				OpenAPISwaggerCache = string(openapi)
 			}
 
 			// save
-			err = ioutil.WriteFile("static/openapi.yml", openapi, 0777)
+			err = ioutil.WriteFile("static/openapi.yml", []byte(OpenAPISwaggerCache), 0777)
 			if err != nil {
 				log.Fatal(err)
 			}

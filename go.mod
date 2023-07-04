@@ -4,7 +4,11 @@ go 1.20
 
 require github.com/gorilla/mux v1.8.0
 
-require github.com/superoo7/go-gecko v1.0.0 // indirect
+require (
+	github.com/joho/godotenv v1.5.1 // indirect
+	github.com/kelseyhightower/envconfig v1.4.0 // indirect
+	github.com/superoo7/go-gecko v1.0.0 // indirect
+)
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
