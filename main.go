@@ -139,6 +139,78 @@ func rpcHtmlView(w http.ResponseWriter, r *http.Request, cfg *Config, body strin
 	return []byte(base)
 }
 
+func replaceStatusValues(cfg *Config, body []byte) []byte {
+	// RPC/status
+	type Status struct {
+		Jsonrpc string `json:"jsonrpc"`
+		ID      int    `json:"id"`
+		Result  struct {
+			NodeInfo struct {
+				ProtocolVersion struct {
+					P2P   string `json:"p2p"`
+					Block string `json:"block"`
+					App   string `json:"app"`
+				} `json:"protocol_version"`
+				ID         string `json:"id"`
+				ListenAddr string `json:"listen_addr"`
+				Network    string `json:"network"`
+				Version    string `json:"version"`
+				Channels   string `json:"channels"`
+				Moniker    string `json:"moniker"`
+				Other      struct {
+					TxIndex    string `json:"tx_index"`
+					RPCAddress string `json:"rpc_address"`
+				} `json:"other"`
+			} `json:"node_info"`
+			SyncInfo struct {
+				LatestBlockHash     string    `json:"latest_block_hash"`
+				LatestAppHash       string    `json:"latest_app_hash"`
+				LatestBlockHeight   string    `json:"latest_block_height"`
+				LatestBlockTime     time.Time `json:"latest_block_time"`
+				EarliestBlockHash   string    `json:"earliest_block_hash"`
+				EarliestAppHash     string    `json:"earliest_app_hash"`
+				EarliestBlockHeight string    `json:"earliest_block_height"`
+				EarliestBlockTime   time.Time `json:"earliest_block_time"`
+				CatchingUp          bool      `json:"catching_up"`
+			} `json:"sync_info"`
+			ValidatorInfo struct {
+				Address string `json:"address"`
+				PubKey  struct {
+					Type  string `json:"type"`
+					Value string `json:"value"`
+				} `json:"pub_key"`
+				VotingPower string `json:"voting_power"`
+			} `json:"validator_info"`
+			MevInfo struct {
+				IsPeeredWithSentinel     bool   `json:"is_peered_with_sentinel"`
+				LastReceivedBundleHeight string `json:"last_received_bundle_height"`
+			} `json:"mev_info"`
+		} `json:"result"`
+	}
+
+	var status Status
+	err := json.Unmarshal(body, &status)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	status.Result.NodeInfo.ListenAddr = cfg.RPC_LISTEN_ADDRESS
+	status.Result.NodeInfo.Other.RPCAddress = cfg.RPC_LISTEN_ADDRESS
+
+	status.Result.NodeInfo.Moniker = cfg.NODE_MONIKER
+	status.Result.NodeInfo.Version = cfg.NODE_TM_VERSION
+
+	// validator_info?
+
+	// convert back to string
+	bz, err := json.Marshal(status)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return bz
+}
+
 func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg *Config, cache Cache) {
 	// if request is for /, then show the html view
 	if r.URL.Path == "/" && HTMLCache != "" && endpoint == rpc {
@@ -186,6 +258,11 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg 
 		HTMLCache = string(body)
 		fmt.Fprint(w, HTMLCache)
 		return
+	}
+
+	// if path starts with /status, then we need to replace some of the data
+	if endpoint == rpc && strings.HasPrefix(r.URL.Path, "/status") {
+		body = replaceStatusValues(cfg, body)
 	}
 
 	cache.Set(url, string(body), timeout)
