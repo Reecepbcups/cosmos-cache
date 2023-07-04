@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/jellydator/ttlcache/v3"
 	"github.com/joho/godotenv"
 
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
@@ -64,7 +65,11 @@ var (
 		"/validators":           true,
 	}
 
-	cache = make(map[string]string)
+	DefaultCacheTime = 6 * time.Second
+
+	cache = ttlcache.New[string, string](
+		ttlcache.WithTTL[string, string](30 * time.Minute),
+	)
 
 	// TODO: Status codes
 	stats = make(map[string]int)
@@ -96,7 +101,7 @@ func blockSubscribe() {
 			time.Sleep(websocketPolling)
 			continue
 		case <-block:
-			cache = make(map[string]string)
+			cache.DeleteExpired()
 			fmt.Println("Cache cleared")
 		}
 	}
@@ -111,7 +116,7 @@ func htmlView(w http.ResponseWriter, r *http.Request, body string) []byte {
 	return []byte(strings.ReplaceAll(body, baseRpc, r.Host))
 }
 
-func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cache map[string]string) {
+func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cache *ttlcache.Cache[string, string]) {
 	// if request is for /, then show the html view
 	if r.URL.Path == "/" && HTMLCache != "" && endpoint == rpc {
 		fmt.Println("HTML Cache hit")
@@ -126,10 +131,10 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cach
 
 	url := endpoint + r.URL.Path + "?" + r.URL.Query().Encode()
 
-	if val, ok := cache[url]; ok {
+	if res := cache.Get(url); res != nil {
 		fmt.Println("Cache hit")
 		stats["CACHE_"+endpoint]++
-		fmt.Fprint(w, val)
+		fmt.Fprint(w, res.Value())
 		return
 	}
 
@@ -145,10 +150,12 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cach
 	}
 
 	if string(body)[:6] == "<html>" {
-		HTMLCache = string(htmlView(w, r, string(body)))
+		body = htmlView(w, r, string(body))
+		HTMLCache = string(body)
 	}
 
-	cache[url] = string(body)
+	// TODO: JSON / YAML config allowing regex changing based off input.
+	cache.Set(url, string(body), DefaultCacheTime)
 
 	stats[endpoint]++
 	fmt.Fprint(w, string(body))
@@ -158,6 +165,8 @@ func main() {
 	if err := godotenv.Load(".env"); err != nil {
 		log.Print("No .env file found")
 	}
+
+	go cache.Start()
 
 	r := mux.NewRouter()
 
