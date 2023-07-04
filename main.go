@@ -358,6 +358,10 @@ func main() {
 		err := http.ListenAndServe(endpoint, r)
 		if err != nil {
 			fmt.Println(err.Error())
+			if strings.Contains(err.Error(), "address already in use") {
+				time.Sleep(5 * time.Second)
+				continue
+			}
 		}
 	}
 }
