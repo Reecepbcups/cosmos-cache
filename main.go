@@ -12,7 +12,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/jellydator/ttlcache/v3"
-	"github.com/joho/godotenv"
 
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 )
@@ -162,9 +161,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cach
 }
 
 func main() {
-	if err := godotenv.Load(".env"); err != nil {
-		log.Print("No .env file found")
-	}
+	cfg := LoadConfigFromFile(".env")
 
 	go cache.Start()
 
@@ -287,11 +284,13 @@ func main() {
 	})
 
 	// Start the server
+	port := cfg.APP_HOST + ":" + cfg.APP_PORT
+
 	fmt.Print("Starting server on port http://localhost:8080...")
-	http.ListenAndServe(":8080", r)
+	http.ListenAndServe(port, r)
 	for {
 		fmt.Println("Restarting server on port http://localhost:8080 due to crash...")
-		err := http.ListenAndServe(":8080", r)
+		err := http.ListenAndServe(port, r)
 		if err != nil {
 			fmt.Println(err.Error())
 		}
