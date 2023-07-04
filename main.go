@@ -131,6 +131,7 @@ func rpcHtmlView(w http.ResponseWriter, r *http.Request, cfg *Config, body strin
 		base = strings.ReplaceAll(base, "<body>", fmt.Sprintf("<body>%s", cfg.RPC_CUSTOM_TEXT))
 	}
 
+	// TODO: This is hidden if coingecko is not set. Set a private comment / unseen list or something?
 	apiURL := fmt.Sprintf("%s<br>REST API:<br><a href=//%s/api>//%s/api</a><br>", coingeckoURL, r.Host, r.Host)
 	if cfg.REST_URL != "" {
 		base = strings.ReplaceAll(base, coingeckoURL, apiURL)
