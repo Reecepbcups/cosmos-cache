@@ -60,7 +60,8 @@ var (
 		"/unsubscribe":          true,
 		"/unsubscribe_all":      true,
 		"/validators":           true,
-		"/websocket":            true,
+		// This is done at the Reverse-Proxy level for now.
+		"/websocket": true,
 	}
 
 	DefaultCacheTimeSeconds = 6
@@ -183,6 +184,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg 
 		body = rpcHtmlView(w, r, cfg, string(body))
 
 		HTMLCache = string(body)
+		fmt.Fprint(w, HTMLCache)
 		return
 	}
 
@@ -349,10 +351,10 @@ func main() {
 	// Start the server
 	endpoint := cfg.APP_HOST + ":" + cfg.APP_PORT
 
-	fmt.Println("Starting server on " + endpoint)
+	fmt.Println("Starting server on http://" + endpoint)
 	http.ListenAndServe(endpoint, r)
 	for {
-		fmt.Println("Restarting on " + endpoint + " due to crash...")
+		fmt.Println("Restarting on http://" + endpoint + " due to crash...")
 		err := http.ListenAndServe(endpoint, r)
 		if err != nil {
 			fmt.Println(err.Error())
