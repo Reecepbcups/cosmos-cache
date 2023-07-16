@@ -73,7 +73,7 @@ type Coin struct {
 	Prices      map[string]float64 `json:"prices"`
 }
 
-func CoingeckoQuery(client *http.Client, ids string, vs_currencies string) Prices {
+func CoingeckoQuery(client http.Client, ids string, vs_currencies string) Prices {
 	now := time.Now().Unix()
 
 	if len(symbols) == 0 {
@@ -147,7 +147,7 @@ type Symbol struct {
 	Name   string `json:"name"`
 }
 
-func GetSymbols(client *http.Client, ids string) []Symbol {
+func GetSymbols(client http.Client, ids string) []Symbol {
 	groups := []Symbol{}
 
 	for _, id := range strings.Split(ids, ",") {
