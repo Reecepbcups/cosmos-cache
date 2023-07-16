@@ -1,28 +1,20 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"strings"
 	"time"
-
-	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
-)
-
-const (
-	websocketPolling = 100 * time.Millisecond
 )
 
 var (
-	// Set in ctx instead?
 	HTMLCache           = ""
 	OpenAPISwaggerCache = ""
 
-	// TODO: Get this on first request to / and then parse and save it? (tm 37 support?)
 	rpcEndpointsTM34 = map[string]bool{
 		"/":                     true,
 		"/abci_info":            true,
@@ -68,41 +60,46 @@ var (
 	stats = make(map[string]int)
 )
 
-func blockSubscribe(cfg *Config) {
-	websocketEndpoint := strings.ReplaceAll(cfg.RPC_WEBSOCKET, "/websocket", "")
+func main() {
+	cfg := LoadConfigFromFile(".env")
+	cfg.LoadCacheTimes("cache_times.json")
 
-	client, err := rpchttp.New(websocketEndpoint, "/websocket")
-	if err != nil {
-		panic(err)
+	httpClient := http.Client{
+		Timeout: time.Second * 10,
 	}
 
-	err = client.Start()
-	if err != nil {
-		panic(err)
-	}
-	defer client.Stop()
+	server := NewServer(httpClient, cfg, &cache)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	setFlags(cfg)
 
-	block, err := client.Subscribe(ctx, "cosmoscache-client", "tm.event = 'NewBlock'")
-	if err != nil {
-		panic(err)
+	go BlockSubscribe(cfg)
+
+	server.Start(cfg.APP_HOST + ":" + cfg.APP_PORT)
+}
+
+func appendNewUrl(desc string, url string, breakLineBefore, breakLineAfter bool, r *http.Request, body string) []byte {
+	text := ""
+	if breakLineBefore {
+		text = "<br>"
 	}
 
-	for {
-		select {
-		case <-ctx.Done():
-			time.Sleep(websocketPolling)
-			continue
-		case <-block:
-			cleared := cache.ClearExpired(true)
-			if cleared > 0 {
-				fmt.Printf("Cache cleared %d keys.\n", cleared)
-				fmt.Printf("Cache has %d remaining.\n", len(cache.Keys()))
-			}
-		}
+	if desc != "" {
+		text += desc
 	}
+
+	if len(url) > 0 {
+		text += fmt.Sprintf("<br><a href=//%s%s>//%s%s</a>", r.Host, url, r.Host, url)
+	}
+	if breakLineAfter {
+		text += "<br><br>"
+	}
+
+	res := strings.ReplaceAll(body, "<div class='replace'>", text+"<div class='replace'>")
+
+	fmt.Println(res)
+
+	return []byte(res)
+
 }
 
 func rpcHtmlView(w http.ResponseWriter, r *http.Request, cfg *Config, body string) []byte {
@@ -112,9 +109,12 @@ func rpcHtmlView(w http.ResponseWriter, r *http.Request, cfg *Config, body strin
 	baseRpc = strings.ReplaceAll(baseRpc, "https://", "")
 	base := strings.ReplaceAll(body, baseRpc, r.Host)
 
-	coingeckoURL := fmt.Sprintf("Coingecko Asset Prices:<br><a href=//%s/prices>//%s/prices</a><br>", r.Host, r.Host)
+	if cfg.RPC_CUSTOM_TEXT != "" {
+		base = string(appendNewUrl(cfg.RPC_CUSTOM_TEXT, "", false, false, r, base))
+	}
+
 	if cfg.COINGECKO_ENABLED {
-		base = strings.ReplaceAll(base, "Available endpoints:<br>", coingeckoURL)
+		base = string(appendNewUrl("Coingecko Asset Prices:", "/prices", true, true, r, base))
 	}
 
 	if cfg.RPC_TITLE != "" {
@@ -122,14 +122,8 @@ func rpcHtmlView(w http.ResponseWriter, r *http.Request, cfg *Config, body strin
 		base = strings.ReplaceAll(base, "<html>", title)
 	}
 
-	if cfg.RPC_CUSTOM_TEXT != "" {
-		base = strings.ReplaceAll(base, "<body>", fmt.Sprintf("<body>%s", cfg.RPC_CUSTOM_TEXT))
-	}
-
-	// TODO: This is hidden if coingecko is not set. Set a private comment / unseen list or something?
-	apiURL := fmt.Sprintf("%s<br>REST API:<br><a href=//%s/api>//%s/api</a><br>", coingeckoURL, r.Host, r.Host)
 	if cfg.REST_URL != "" {
-		base = strings.ReplaceAll(base, coingeckoURL, apiURL)
+		base = string(appendNewUrl("REST API:", "/api", false, true, r, base))
 	}
 
 	return []byte(base)
@@ -242,12 +236,13 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg 
 		log.Fatal(err)
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	if strings.HasPrefix(string(body), "<html>") {
+		body = []byte(strings.ReplaceAll(string(body), "<body><br>Available endpoints:<br><br>", "<div class='replace'>"))
 		body = rpcHtmlView(w, r, cfg, string(body))
 
 		HTMLCache = string(body)
@@ -266,19 +261,11 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg 
 	fmt.Fprint(w, string(body))
 }
 
-func main() {
-	cfg := LoadConfigFromFile(".env")
-	cfg.LoadCacheTimes("cache_times.json")
+func setFlags(cfg *Config) {
+	host := flag.String("host", cfg.APP_HOST, "Host to listen on")
+	port := flag.String("port", cfg.APP_PORT, "Port to listen on")
+	flag.Parse()
 
-	httpClient := http.Client{
-		Timeout: time.Second * 10,
-	}
-
-	server := NewServer(httpClient, cfg, &cache)
-
-	endpoint := cfg.APP_HOST + ":" + cfg.APP_PORT
-	// TODO: Start Flags options
-	go blockSubscribe(cfg)
-
-	server.Start(endpoint)
+	cfg.APP_HOST = *host
+	cfg.APP_PORT = *port
 }

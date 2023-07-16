@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"regexp"
 	"strings"
 
@@ -91,7 +91,7 @@ func LoadConfigFromFile(filename string) *Config {
 }
 
 func (config *Config) LoadCacheTimes(filename string) {
-	jsonData, err := ioutil.ReadFile(filename)
+	jsonData, err := os.ReadFile(filename)
 	if err != nil {
 		log.Fatal(err)
 	}
