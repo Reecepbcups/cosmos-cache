@@ -197,62 +197,116 @@ func hideStatusValues(cfg *Config, body []byte) []byte {
 }
 
 func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg *Config, cache Cache) {
-	// if request is for /, then show the html view
-	if r.URL.Path == "/" && HTMLCache != "" && endpoint == cfg.RPC {
-		// fmt.Println("HTML Cache hit")
-		stats["HTML_CACHE"]++
-		w.Header().Set("Content-Type", "text/html")
-
-		fmt.Fprint(w, HTMLCache)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	fullPath := r.URL.Path + "?" + r.URL.Query().Encode()
-	url := endpoint + fullPath
+	if r.Method == "GET" {
+		// if request is for /, then show the html view
+		if r.URL.Path == "/" && HTMLCache != "" && endpoint == cfg.RPC {
+			// fmt.Println("HTML Cache hit")
+			stats["HTML_CACHE"]++
+			w.Header().Set("Content-Type", "text/html")
 
-	timeout := cfg.GetTimeout(fullPath)
-	if timeout == -1 {
-		fmt.Fprintf(w, `{"error":"This endpoint '%s' is disabled."}`, r.URL.Path)
-		return
+			fmt.Fprint(w, HTMLCache)
+			return
+		}
+
+		fullPath := r.URL.Path + "?" + r.URL.Query().Encode()
+		url := endpoint + fullPath
+
+		timeout := cfg.GetTimeout(fullPath)
+		if timeout == -1 {
+			fmt.Fprintf(w, `{"error":"This endpoint '%s' is disabled."}`, r.URL.Path)
+			return
+		}
+
+		if res := cache.Get(url); res != nil {
+			fmt.Println("Cache hit")
+			stats["CACHE_"+endpoint]++
+			fmt.Fprint(w, res.Value)
+			return
+		}
+
+		res, err := http.Get(url)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if strings.HasPrefix(string(body), "<html>") {
+			body = []byte(strings.ReplaceAll(string(body), "<body><br>Available endpoints:<br><br>", "<div class='replace'>"))
+
+			HTMLCache = string(rpcHtmlView(w, r, cfg, string(body)))
+			fmt.Fprint(w, HTMLCache)
+			return
+		}
+
+		// if path starts with /status, then we need to replace some of the data
+		if endpoint == cfg.RPC && strings.HasPrefix(r.URL.Path, "/status") {
+			body = hideStatusValues(cfg, body)
+		}
+
+		cache.Set(url, string(body), timeout)
+
+		stats[endpoint]++
+		fmt.Fprint(w, string(body))
+	} else if r.Method == "POST" {
+		// TODO: mock id's replied back with
+		if endpoint == cfg.REST_URL {
+			fmt.Fprintf(w, `{"error":"This endpoint '%s' is not yet supported for the rest API (Req: %s)."}`, r.URL.Path, r.Method)
+			return
+		}
+
+		fullPath := r.URL.Path
+		url := endpoint + fullPath
+
+		timeout := cfg.GetTimeout(fullPath)
+		if timeout == -1 {
+			fmt.Fprintf(w, `{"error":"This endpoint '%s' is disabled."}`, r.URL.Path)
+			return
+		}
+
+		if res := cache.Get(url); res != nil {
+			fmt.Println("Cache hit")
+			stats["CACHE_"+endpoint]++
+			fmt.Fprint(w, res.Value)
+			return
+		}
+
+		res, err := http.Post(url, "application/json", r.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println("myBodyReply", string(body))
+
+		// if strings.HasPrefix(string(body), "<html>") {
+		// 	body = []byte(strings.ReplaceAll(string(body), "<body><br>Available endpoints:<br><br>", "<div class='replace'>"))
+
+		// 	HTMLCache = string(rpcHtmlView(w, r, cfg, string(body)))
+		// 	fmt.Fprint(w, HTMLCache)
+		// 	return
+		// }
+
+		// if path starts with /status, then we need to replace some of the data
+		if endpoint == cfg.RPC && strings.HasPrefix(r.URL.Path, "/status") {
+			body = hideStatusValues(cfg, body)
+		}
+
+		cache.Set(url, string(body), timeout)
+
+		stats[endpoint]++
+		fmt.Fprint(w, string(body))
 	}
-
-	if res := cache.Get(url); res != nil {
-		fmt.Println("Cache hit")
-		stats["CACHE_"+endpoint]++
-		fmt.Fprint(w, res.Value)
-		return
-	}
-
-	res, err := http.Get(url)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if strings.HasPrefix(string(body), "<html>") {
-		body = []byte(strings.ReplaceAll(string(body), "<body><br>Available endpoints:<br><br>", "<div class='replace'>"))
-
-		HTMLCache = string(rpcHtmlView(w, r, cfg, string(body)))
-		fmt.Fprint(w, HTMLCache)
-		return
-	}
-
-	// if path starts with /status, then we need to replace some of the data
-	if endpoint == cfg.RPC && strings.HasPrefix(r.URL.Path, "/status") {
-		body = hideStatusValues(cfg, body)
-	}
-
-	cache.Set(url, string(body), timeout)
-
-	stats[endpoint]++
-	fmt.Fprint(w, string(body))
 }
 
 func setFlags(cfg *Config) {
