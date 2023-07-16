@@ -77,9 +77,9 @@ func main() {
 	server.Start(cfg.APP_HOST + ":" + cfg.APP_PORT)
 }
 
-func appendNewUrl(desc string, url string, breakLineBefore, breakLineAfter bool, r *http.Request, body string) []byte {
+func appendNewUrl(desc string, url string, breakBefore, breakAfter bool, r *http.Request, body string) []byte {
 	text := ""
-	if breakLineBefore {
+	if breakBefore {
 		text = "<br>"
 	}
 
@@ -90,16 +90,11 @@ func appendNewUrl(desc string, url string, breakLineBefore, breakLineAfter bool,
 	if len(url) > 0 {
 		text += fmt.Sprintf("<br><a href=//%s%s>//%s%s</a>", r.Host, url, r.Host, url)
 	}
-	if breakLineAfter {
+	if breakAfter {
 		text += "<br><br>"
 	}
 
-	res := strings.ReplaceAll(body, "<div class='replace'>", text+"<div class='replace'>")
-
-	fmt.Println(res)
-
-	return []byte(res)
-
+	return []byte(strings.ReplaceAll(body, "<div class='replace'>", text+"<div class='replace'>"))
 }
 
 func rpcHtmlView(w http.ResponseWriter, r *http.Request, cfg *Config, body string) []byte {
@@ -243,9 +238,8 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg 
 
 	if strings.HasPrefix(string(body), "<html>") {
 		body = []byte(strings.ReplaceAll(string(body), "<body><br>Available endpoints:<br><br>", "<div class='replace'>"))
-		body = rpcHtmlView(w, r, cfg, string(body))
 
-		HTMLCache = string(body)
+		HTMLCache = string(rpcHtmlView(w, r, cfg, string(body)))
 		fmt.Fprint(w, HTMLCache)
 		return
 	}
