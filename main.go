@@ -11,6 +11,41 @@ import (
 	"time"
 )
 
+// Tx Response
+type RPCResponse struct {
+	Jsonrpc string `json:"jsonrpc"`
+	ID      int    `json:"id"`
+	Result  struct {
+		Response struct {
+			Code      int    `json:"code"`
+			Log       string `json:"log"`
+			Info      int    `json:"info"`
+			Index     string `json:"index"`
+			Key       any    `json:"key"`
+			Value     string `json:"value"`
+			ProofOps  any    `json:"proofOps"`
+			Height    string `json:"height"`
+			Codespace string `json:"codespace"`
+		} `json:"response"`
+	} `json:"result"`
+}
+
+type RPCRequest struct {
+	Jsonrpc string `json:"jsonrpc"`
+	ID      int    `json:"id"`
+	Method  string `json:"method"`
+	Params  struct {
+		Data   string `json:"data"`
+		Height string `json:"height"`
+		Path   string `json:"path"`
+		Prove  bool   `json:"prove"`
+	} `json:"params"`
+}
+
+func (rq RPCRequest) String() string {
+	return fmt.Sprintf("%s:%s,%s,%s,%v", rq.Method, rq.Params.Path, rq.Params.Data, rq.Params.Height, rq.Params.Prove)
+}
+
 var (
 	HTMLCache           = ""
 	OpenAPISwaggerCache = ""
@@ -261,33 +296,120 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg 
 			return
 		}
 
-		fullPath := r.URL.Path
-		url := endpoint + fullPath
+		var rpcReq RPCRequest
+		reqBytes, _ := io.ReadAll(r.Body)
 
-		timeout := cfg.GetTimeout(fullPath)
+		if !strings.Contains(string(reqBytes), "<html>") {
+			err := json.Unmarshal(reqBytes, &rpcReq)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		// currentId := rpcReq.ID
+		rpcReq.ID = -1
+
+		// {"jsonrpc":"2.0","id":0,"method":"abci_query","params":{"data":"0A2B6A756E6F313072333966756570683966713761366C67737775347A64736738743367786C713637306C7430","height":"0","path":"/cosmos.auth.v1beta1.Query/Account","prove":false}}
+		// marshal prePost and get it as a key
+
+		// cacheKey := string(reqBytes)
+
+		timeout := cfg.GetTimeout(r.URL.Path)
 		if timeout == -1 {
 			fmt.Fprintf(w, `{"error":"This endpoint '%s' is disabled."}`, r.URL.Path)
 			return
 		}
 
-		if res := cache.Get(url); res != nil {
-			fmt.Println("Cache hit")
+		// get id from the request
+		// var prePost postRPC
+		// var currentId int
+
+		// jsonrpc, id, method, params
+
+		// if err != nil {
+		// 	panic(err)
+		// }
+		// fmt.Println(string(reqBytes))
+
+		// if !strings.HasPrefix(string(respBytes), "<") {
+		// 	err := json.NewDecoder(r.Body).Decode(&prePost)
+		// 	if err != nil {
+		// 		log.Fatal(err)
+		// 	}
+		// 	currentId = prePost.ID
+		// 	fmt.Println(" - (id)", currentId)
+		// }
+
+		// print post
+		// fmt.Println(" - (body)", r.Body)
+
+		key := rpcReq.String()
+		fmt.Println("-- (CacheKey)", key)
+		if res := cache.Get(key); res != nil && rpcReq.Method != "broadcast_tx_sync" {
+			// fmt.Println("res.Value", res.Value)
+			// var resp RPCResponse
+			var resp any
+			err := json.Unmarshal([]byte(res.Value), &resp)
+			if err != nil {
+				// fmt.Println("err", err)
+				return
+			}
+			// resp.ID = currentId
+
+			// convert resp to json
+			respBytes, err := json.Marshal(resp)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// convert it to bytes, then Fprint it.
+
+			fmt.Println("Cache hit", string(respBytes))
+
+			// fmt.Println(string(respBytes))
+
 			stats["CACHE_"+endpoint]++
-			fmt.Fprint(w, res.Value)
+			fmt.Fprint(w, respBytes)
 			return
 		}
 
-		res, err := http.Post(url, "application/json", r.Body)
-		if err != nil {
-			log.Fatal(err)
+		// try catch POST request, if first fails try RPC2
+
+		var err error
+		var res *http.Response
+		RPCS := append([]string{cfg.RPC}, cfg.BACKUP_RPCS...)
+		for _, rpc := range RPCS {
+			res, err = http.Post(rpc, "application/json", strings.NewReader(string(reqBytes)))
+			if err != nil {
+				log.Printf("POST request to %s failed: %v", rpc, err)
+				continue
+			}
+			break
 		}
 
+		// Request successful, handle the response and break the loop
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			log.Fatal(err)
 		}
+		// fmt.Println("body", string(body))
 
-		fmt.Println("myBodyReply", string(body))
+		// fmt.Println("res", res)
+		// fmt.Println("bodybody", string(body)) // can be html
+
+		// if body does not start with < , then load it into postRPC
+		// var rpcResp RPCResponse
+		var rpcResp any
+		if !strings.Contains(string(body), "<html>") {
+			err = json.Unmarshal(body, &rpcResp)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		// rpcResp.ID = -1 -- since we unmarshal it later we can just replace anyways in the reply.
+
+		// // print post
+		fmt.Println(" - (body body)", string(body))
 
 		// if strings.HasPrefix(string(body), "<html>") {
 		// 	body = []byte(strings.ReplaceAll(string(body), "<body><br>Available endpoints:<br><br>", "<div class='replace'>"))
@@ -297,12 +419,31 @@ func HandleRequest(w http.ResponseWriter, r *http.Request, endpoint string, cfg 
 		// 	return
 		// }
 
+		// load body into postRPC
+		// var post postRPC
+		// err = json.Unmarshal(body, &post)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+
 		// if path starts with /status, then we need to replace some of the data
-		if endpoint == cfg.RPC && strings.HasPrefix(r.URL.Path, "/status") {
-			body = hideStatusValues(cfg, body)
+		// TODO: fix this for post request.
+		// if endpoint == cfg.RPC && strings.HasPrefix(r.URL.Path, "/status") {
+		// 	body = hideStatusValues(cfg, body)
+		// }
+
+		// cacheRes, err := json.Marshal(post)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+
+		// convert rpcResp to string
+		rpcRespBytes, err := json.Marshal(rpcResp)
+		if err != nil {
+			log.Fatal(err)
 		}
 
-		cache.Set(url, string(body), timeout)
+		cache.Set(key, string(rpcRespBytes), timeout)
 
 		stats[endpoint]++
 		fmt.Fprint(w, string(body))
