@@ -109,7 +109,6 @@ DISABLE_SWAGGER_UI = getenv("DISABLE_SWAGGER_UI", "false").lower().startswith("t
 # Security
 RPC_LISTEN_ADDRESS = getenv("RPC_LISTEN_ADDRESS", "")
 NODE_MONIKER = getenv("NODE_MONIKER", "")
-NODE_TM_VERSION = getenv("NODE_TM_VERSION", "")
 
 # === Cache Times ===
 DEFAULT_CACHE_SECONDS: int = 6

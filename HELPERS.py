@@ -219,7 +219,6 @@ def hide_rpc_data(res: dict, endpoint_path: str):
             res, "result.node_info.other.rpc_address", CONFIG.RPC_LISTEN_ADDRESS
         )
         res = _hide_data(res, "result.node_info.moniker", CONFIG.NODE_MONIKER)
-        res = _hide_data(res, "result.node_info.version", CONFIG.NODE_TM_VERSION)
 
     return res
 
@@ -233,7 +232,6 @@ def hide_rest_data(res: dict, endpoint_path: str):
             res, "default_node_info.other.rpc_address", CONFIG.RPC_LISTEN_ADDRESS
         )
         res = _hide_data(res, "default_node_info.moniker", CONFIG.NODE_MONIKER)
-        res = _hide_data(res, "default_node_info.version", CONFIG.NODE_TM_VERSION)
 
         # hide application_version.build_deps?
 

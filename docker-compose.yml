@@ -16,8 +16,7 @@ services:
       - RPC_WEBSOCKET=ws://5.161.80.115:26657/websocket
       - BACKUP_RPC_WEBSOCKET=ws://5.161.80.115:26657/websocket
       - RPC_LISTEN_ADDRESS=HIDDEN
-      - NODE_MONIKER="testing"
-      - NODE_TM_VERSION=HIDDEN
+      - NODE_MONIKER="testing"      
       - COINGECKO_ENABLED=true
       # - COINGECKO_API_KEY="HERE"
       - COINGECKO_CACHE_SECONDS=6 # do not change if you do not have an API key.

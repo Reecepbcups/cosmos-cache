@@ -17,8 +17,7 @@ services:
       - BACKUP_RPC_URL=https://juno-rpc.polkachu.com
       - RPC_WEBSOCKET=ws://15.204.143.232:26657/websocket
       - NODE_MONIKER=reecepbcups
-      - RPC_LISTEN_ADDRESS=HIDDEN
-      - NODE_TM_VERSION=HIDDEN
+      - RPC_LISTEN_ADDRESS=HIDDEN      
       - COINGECKO_ENABLED=true
       # - COINGECKO_API_KEY=HERE
       - COINGECKO_CACHE_SECONDS=6 # do not change if you do not have an API key.
