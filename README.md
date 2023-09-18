@@ -18,9 +18,9 @@ It supports
 - Swagger + OpenAPI support (openapi.yml cached)
 - HttpBatchClient (for RPC with Tendermint 0.34 client)
 - Statistics (optional /stats endpoint with password)
-
-- Websocket basic passthrough support for Keplr wallet (TODO)
-- Index blocks (TODO)
+- 
+- Websocket basic passthrough support for Keplr wallet
+- Index blocks (TODO?)
 
 ## Public Endpoints
 
