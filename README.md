@@ -2,7 +2,7 @@
   <img src="https://user-images.githubusercontent.com/31943163/217985088-cfcf62b3-808f-4ae3-a7f3-8c8486d941c9.png" />
 </p>
 
-Optimize Cosmos query calls by caching responses with a local Key-Value store for a predefined set of time. 
+Optimize Cosmos query calls with this chain syncronized caching layer.
 
 This program sits on top of another server and acts as a middleware between the requesting client and the actual cosmos RPC/API server.
 
