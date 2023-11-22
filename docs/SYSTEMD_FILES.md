@@ -36,7 +36,7 @@ WantedBy=gunicorn.target
 # ============
 
 # Then you can start / stop / restart the service
-sudo systemctl daemon-reload 
+sudo systemctl daemon-reload
 
 sudo systemctl start NETWORK_RPC.service
 sudo systemctl enable NETWORK_RPC.service # start after reboot
@@ -54,7 +54,7 @@ sudo systemctl enable NETWORK_RPC.service # start after reboot
 chmod +x run_rest.sh
 
 # If you are running as Group=root :
-# `sudo python -m pip install -r requirements/requirements.txt --upgrade`
+# `sudo python3 -m pip install -r requirements/requirements.txt --upgrade`
 sudo nano /lib/systemd/system/NETWORK_REST.service
 
 # Ensure to change WorkingDirectory and ExecStart to your folder locations
@@ -62,7 +62,7 @@ sudo nano /lib/systemd/system/NETWORK_REST.service
 
 # ============
 [Unit]
-Description=gunicorn rpc
+Description=gunicorn rest
 After=network.target
 PartOf=gunicorn.target
 ReloadPropagatedFrom=gunicorn.target
@@ -81,7 +81,7 @@ WantedBy=gunicorn.target
 # ============
 
 # Then you can start / stop / restart the service
-sudo systemctl daemon-reload 
+sudo systemctl daemon-reload
 
 sudo systemctl start NETWORK_REST.service
 sudo systemctl enable NETWORK_REST.service

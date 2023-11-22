@@ -2,9 +2,9 @@
 #
 # chmod +x run_rest.sh
 #
-# Directions ./docs/SYSTEMD_FILES.md 
+# Directions ./docs/SYSTEMD_FILES.md
 #
-# sudo systemctl daemon-reload 
+# sudo systemctl daemon-reload
 # sudo systemctl start juno_rest.service
 
 PORT=${PORT:-5000}
